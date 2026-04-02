@@ -1,0 +1,6 @@
+@TradeJ_HostAddress = http://localhost:5237
+
+GET {{TradeJ_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
