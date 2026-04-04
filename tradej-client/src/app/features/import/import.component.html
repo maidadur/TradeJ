@@ -1,0 +1,327 @@
+<div class="import-page">
+  <div class="page-header">
+    <h1 class="page-title">Import Trades</h1>
+  </div>
+
+  <!-- ── MT5 Live Import ─────────────────────────────────────── -->
+  @if (mt5LiveAccounts().length > 0) {
+    <div class="live-section">
+      <div class="live-section-header">
+        <span class="live-dot"></span>
+        <h2 class="live-title">MT5 Live Import</h2>
+        <span class="live-sub">Fetch directly from your broker via MetaApi</span>
+      </div>
+      <div class="live-grid">
+        <div class="live-card">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <p-select
+              [options]="mt5LiveAccounts()"
+              [(ngModel)]="liveAccount"
+              optionLabel="name"
+              [style]="{'width':'100%'}"
+            />
+          </div>
+          <div class="date-row">
+            <div class="form-group">
+              <label class="form-label">From</label>
+              <p-datepicker [(ngModel)]="liveDateFrom" dateFormat="yy-mm-dd"
+                [style]="{'width':'100%'}" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">To</label>
+              <p-datepicker [(ngModel)]="liveDateTo" dateFormat="yy-mm-dd"
+                [style]="{'width':'100%'}" />
+            </div>
+          </div>
+          <p-button
+            label="Import from MT5"
+            icon="pi pi-download"
+            [disabled]="!canLiveImport()"
+            [loading]="importingLive()"
+            (onClick)="doLiveImport()"
+            [style]="{'width':'100%'}"
+          />
+        </div>
+
+        <!-- Live result -->
+        <div class="live-result">
+          @if (liveResult()) {
+            <div class="result-card" [class.has-errors]="liveResult()!.errors > 0">
+              <div class="result-header">
+                <i class="pi pi-check-circle" style="font-size:1.5rem"
+                  [style.color]="liveResult()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+                <strong>Import Complete</strong>
+              </div>
+              <div class="result-stats">
+                <div class="result-stat">
+                  <span class="result-value pnl-pos">{{liveResult()!.imported}}</span>
+                  <span class="result-label">Imported</span>
+                </div>
+                <div class="result-stat">
+                  <span class="result-value" style="color:#94a3b8">{{liveResult()!.skipped}}</span>
+                  <span class="result-label">Skipped</span>
+                </div>
+                <div class="result-stat">
+                  <span class="result-value pnl-neg">{{liveResult()!.errors}}</span>
+                  <span class="result-label">Errors</span>
+                </div>
+              </div>
+              @if (liveResult()!.errorMessages.length > 0) {
+                <div class="error-list">
+                  @for (msg of liveResult()!.errorMessages; track msg) {
+                    <div class="error-item">{{msg}}</div>
+                  }
+                </div>
+              }
+              <a routerLink="/trades" class="view-trades-link">
+                <i class="pi pi-list"></i> View Trades
+              </a>
+            </div>
+          } @else {
+            <div class="live-idle">
+              <i class="pi pi-info-circle" style="font-size:1.5rem;color:#4338ca"></i>
+              <p>Select a date range and click <strong>Import from MT5</strong> to pull your trade history directly from MetaApi.</p>
+              <p class="live-idle-sub">Already imported trades are skipped automatically.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="live-setup-notice">
+      <i class="pi pi-link"></i>
+      <span>To enable MT5 live import, go to <a routerLink="/accounts">Accounts</a> and add your MetaApi credentials to an MT5 account.</span>
+    </div>
+  }
+
+  <!-- ── MT5 Sync (Python Bridge) ──────────────────────────────── -->
+  @if (mt5SyncAccounts().length > 0) {
+    <div class="live-section">
+      <div class="live-section-header">
+        <span class="live-dot" style="background:#6366f1"></span>
+        <h2 class="live-title">MT5 Sync</h2>
+        <span class="live-sub">Import directly from MT5 terminal — no paid service needed</span>
+      </div>
+      <div class="sync-notice">
+        <i class="pi pi-info-circle"></i>
+        <span>Start the bridge once before syncing: <code>python scripts/mt5_bridge.py</code> — MT5 terminal must also be open.</span>
+      </div>
+      <div class="live-grid">
+        <div class="live-card">
+          <div class="form-group">
+            <label class="form-label">Account</label>
+            <p-select
+              [options]="mt5SyncAccounts()"
+              [(ngModel)]="syncAccount"
+              optionLabel="name"
+              [style]="{'width':'100%'}"
+            />
+          </div>
+          <div class="date-row">
+            <div class="form-group">
+              <label class="form-label">From</label>
+              <p-datepicker [(ngModel)]="syncDateFrom" dateFormat="yy-mm-dd"
+                [style]="{'width':'100%'}" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">To</label>
+              <p-datepicker [(ngModel)]="syncDateTo" dateFormat="yy-mm-dd"
+                [style]="{'width':'100%'}" />
+            </div>
+          </div>
+          <p-button
+            label="Sync from MT5"
+            icon="pi pi-sync"
+            [disabled]="!canSyncImport()"
+            [loading]="importingSync()"
+            (onClick)="doSyncImport()"
+            [style]="{'width':'100%'}"
+          />
+        </div>
+
+        <!-- Sync result -->
+        <div class="live-result">
+          @if (syncResult()) {
+            <div class="result-card" [class.has-errors]="syncResult()!.errors > 0">
+              <div class="result-header">
+                <i class="pi pi-check-circle" style="font-size:1.5rem"
+                  [style.color]="syncResult()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+                <strong>Sync Complete</strong>
+              </div>
+              <div class="result-stats">
+                <div class="result-stat">
+                  <span class="result-value pnl-pos">{{syncResult()!.imported}}</span>
+                  <span class="result-label">Imported</span>
+                </div>
+                <div class="result-stat">
+                  <span class="result-value" style="color:#94a3b8">{{syncResult()!.skipped}}</span>
+                  <span class="result-label">Skipped</span>
+                </div>
+                <div class="result-stat">
+                  <span class="result-value pnl-neg">{{syncResult()!.errors}}</span>
+                  <span class="result-label">Errors</span>
+                </div>
+              </div>
+              @if (syncResult()!.errorMessages.length > 0) {
+                <div class="error-list">
+                  @for (msg of syncResult()!.errorMessages; track msg) {
+                    <div class="error-item">{{msg}}</div>
+                  }
+                </div>
+              }
+              <a routerLink="/trades" class="view-trades-link">
+                <i class="pi pi-list"></i> View Trades
+              </a>
+            </div>
+          } @else {
+            <div class="live-idle">
+              <i class="pi pi-sync" style="font-size:1.5rem;color:#6366f1"></i>
+              <p>Select a date range and click <strong>Sync from MT5</strong> to pull your trade history directly from your MT5 terminal.</p>
+              <p class="live-idle-sub">Credentials are stored on the account. Already-imported trades are skipped.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="live-setup-notice">
+      <i class="pi pi-desktop"></i>
+      <span>To enable MT5 Sync, go to <a routerLink="/accounts">Accounts</a>, edit an MT5 account and fill in the <strong>MT5 Server</strong> field (e.g. <em>ICMarkets-Live01</em>).</span>
+    </div>
+  }
+
+  <div class="import-layout">
+    <!-- Import Form -->
+    <div class="import-card">
+      <h2 class="card-title">Select Source (CSV)</h2>
+
+      <!-- Broker Cards -->
+      <div class="broker-grid">
+        @for (broker of brokerOptions; track broker.value) {
+          <div
+            class="broker-card"
+            [class.selected]="selectedBroker === broker.value"
+            (click)="selectedBroker = broker.value"
+          >
+            <div class="broker-name">{{broker.label}}</div>
+            <div class="broker-desc">{{broker.description}}</div>
+          </div>
+        }
+      </div>
+
+      <!-- Account Selector -->
+      <div class="form-group">
+        <label class="form-label">Account</label>
+        <p-select
+          [options]="accounts()"
+          [(ngModel)]="selectedAccount"
+          optionLabel="name"
+          placeholder="Select account to import into"
+          class="w-full"
+          [style]="{'width':'100%'}"
+        />
+      </div>
+
+      <!-- Format Hint -->
+      @if (selectedBroker) {
+        <div class="format-hint">
+          <i class="pi pi-info-circle"></i>
+          <div>
+            <strong>{{currentBroker()?.label}} CSV Format:</strong>
+            <p>{{currentBroker()?.hint}}</p>
+          </div>
+        </div>
+      }
+
+      <!-- File Upload -->
+      <div class="form-group">
+        <label class="form-label">CSV File</label>
+        <div
+          class="drop-zone"
+          [class.has-file]="selectedFile()"
+          (click)="fileInput.click()"
+          (dragover)="$event.preventDefault()"
+          (drop)="onDrop($event)"
+        >
+          @if (selectedFile()) {
+            <i class="pi pi-file-excel" style="font-size:2rem;color:#22c55e"></i>
+            <span>{{selectedFile()!.name}}</span>
+            <span style="font-size:0.75rem;color:#64748b">{{formatSize(selectedFile()!.size)}}</span>
+          } @else {
+            <i class="pi pi-upload" style="font-size:2rem;color:#475569"></i>
+            <span>Drop CSV file here or click to browse</span>
+            <span style="font-size:0.75rem;color:#475569">Max 20MB</span>
+          }
+        </div>
+        <input #fileInput type="file" accept=".csv,.txt" style="display:none" (change)="onFileChange($event)" />
+      </div>
+
+      <p-button
+        label="Import Trades"
+        icon="pi pi-upload"
+        [disabled]="!canImport()"
+        [loading]="importing()"
+        (onClick)="doImport()"
+        class="w-full"
+        [style]="{'width':'100%'}"
+      />
+    </div>
+
+    <!-- Result Panel -->
+    <div class="result-panel">
+      @if (result()) {
+        <div class="result-card" [class.has-errors]="result()!.errors > 0">
+          <div class="result-header">
+            <i class="pi pi-check-circle" style="font-size:2rem" [style.color]="result()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+            <h3>Import Complete</h3>
+          </div>
+          <div class="result-stats">
+            <div class="result-stat">
+              <span class="result-value pnl-pos">{{result()!.imported}}</span>
+              <span class="result-label">Imported</span>
+            </div>
+            <div class="result-stat">
+              <span class="result-value" style="color:#94a3b8">{{result()!.skipped}}</span>
+              <span class="result-label">Skipped</span>
+            </div>
+            <div class="result-stat">
+              <span class="result-value pnl-neg">{{result()!.errors}}</span>
+              <span class="result-label">Errors</span>
+            </div>
+          </div>
+          @if (result()!.errorMessages.length > 0) {
+            <div class="error-list">
+              <div class="error-title">Parse errors:</div>
+              @for (msg of result()!.errorMessages.slice(0, 20); track msg) {
+                <div class="error-item">{{msg}}</div>
+              }
+              @if (result()!.errorMessages.length > 20) {
+                <div class="error-item">...and {{result()!.errorMessages.length - 20}} more.</div>
+              }
+            </div>
+          }
+          <a routerLink="/trades" class="view-trades-link">
+            <i class="pi pi-list"></i> View Trades
+          </a>
+        </div>
+      } @else {
+        <div class="instructions-card">
+          <h3>How to Export</h3>
+          <div class="how-to-item">
+            <strong>MT5</strong>
+            <p>Open MT5 → View → Terminal → Account History tab → Right-click → Save as Report (HTML) → then convert to CSV, or use the "Export to CSV" option if available. Required columns: Ticket, Open Time, Type, Size, Symbol, Open Price, Close Time, Close Price, Commission, Swap, Profit.</p>
+          </div>
+          <div class="how-to-item">
+            <strong>cTrader</strong>
+            <p>Open cTrader → History → Positions tab → Right-click → Export CSV. Required columns: Position ID, Symbol, Direction, Volume (Lots), Open Time, Open Price, Close Time, Close Price, Commission, Swap, Gross Profit, Net Profit.</p>
+          </div>
+          <div class="how-to-item">
+            <strong>ByBit</strong>
+            <p>ByBit → Orders → Closed P&L → Export (top right). Required columns: Contract, Side, Average Entry Price, Average Exit Price, Closed P&L, Qty, Final time.</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

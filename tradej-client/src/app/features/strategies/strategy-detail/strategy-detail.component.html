@@ -1,0 +1,208 @@
+<div class="strategy-detail-page">
+  <a routerLink="/strategies" class="back-link">
+    <i class="pi pi-arrow-left"></i> Strategies
+  </a>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+  } @else if (strategy()) {
+    <div class="detail-layout">
+
+      <!-- Left sidebar: image + info -->
+      <div class="sidebar-panel">
+        <div class="strategy-image-wrap">
+          @if (strategy()!.imageUrl) {
+            <img [src]="strategy()!.imageUrl" [alt]="strategy()!.name" class="strategy-image" />
+          } @else {
+            <div class="image-placeholder">
+              <i class="pi pi-image"></i>
+            </div>
+          }
+          <label class="image-upload-btn" title="Upload image">
+            <i class="pi pi-camera"></i>
+            <input type="file" accept="image/*" (change)="onImageChange($event)" hidden />
+          </label>
+        </div>
+
+        <div class="strategy-info">
+          <div class="strategy-name">{{strategy()!.name}}</div>
+          @if (strategy()!.description) {
+            <div class="strategy-desc">{{strategy()!.description}}</div>
+          }
+          <p-button
+            label="Edit"
+            icon="pi pi-pencil"
+            severity="secondary"
+            size="small"
+            class="edit-btn"
+            (onClick)="openEditDialog()"
+          />
+        </div>
+      </div>
+
+      <!-- Right: tabs -->
+      <div class="content-panel">
+        <div class="tab-nav">
+          <button class="tab-btn" [class.active]="activeTab==='stats'" (click)="activeTab='stats'">Stats</button>
+          <button class="tab-btn" [class.active]="activeTab==='trades'" (click)="activeTab='trades'">
+            Trades
+            <span class="tab-badge">{{strategy()!.stats.totalTrades}}</span>
+          </button>
+          <button class="tab-btn" [class.active]="activeTab==='notes'" (click)="activeTab='notes'">
+            Notes
+            <span class="tab-badge">{{strategy()!.notes.length}}</span>
+          </button>
+        </div>
+
+        <!-- STATS TAB -->
+        @if (activeTab === 'stats') {
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Trades</div>
+              <div class="stat-value">{{strategy()!.stats.totalTrades}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Winners</div>
+              <div class="stat-value pnl-pos">{{strategy()!.stats.winners}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Losers</div>
+              <div class="stat-value pnl-neg">{{strategy()!.stats.losers}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Win Rate</div>
+              <div class="stat-value">{{strategy()!.stats.winRate | number:'1.1-1'}}%</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Net P&L</div>
+              <div class="stat-value" [class]="pnlClass(strategy()!.stats.netPnL)">
+                {{formatPnL(strategy()!.stats.netPnL)}}
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Profit Factor</div>
+              <div class="stat-value">{{strategy()!.stats.profitFactor | number:'1.2-2'}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Win</div>
+              <div class="stat-value pnl-pos">{{formatPnL(strategy()!.stats.avgWin)}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Loss</div>
+              <div class="stat-value pnl-neg">{{formatPnL(strategy()!.stats.avgLoss)}}</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Avg Hold</div>
+              <div class="stat-value">{{formatDuration(strategy()!.stats.avgHoldMinutes)}}</div>
+            </div>
+          </div>
+        }
+
+        <!-- TRADES TAB -->
+        @if (activeTab === 'trades') {
+          @if (strategy()!.trades.length === 0) {
+            <div class="empty-tab">No trades linked to this strategy yet.</div>
+          } @else {
+            <div class="trades-table">
+              <div class="trades-header">
+                <span>Symbol</span>
+                <span>Direction</span>
+                <span>Entry</span>
+                <span>Exit</span>
+                <span>Volume</span>
+                <span>Net P&L</span>
+              </div>
+              @for (t of strategy()!.trades; track t.id) {
+                <a class="trades-row" [routerLink]="['/trades', t.id]">
+                  <span class="mono">{{t.symbol}}</span>
+                  <span class="dir-badge" [class.dir-long]="t.direction==='Long'" [class.dir-short]="t.direction==='Short'">
+                    {{t.direction === 'Long' ? '▲ Long' : '▼ Short'}}
+                  </span>
+                  <span>{{t.entryTime | date:'MMM d, HH:mm'}}</span>
+                  <span>{{t.exitTime ? (t.exitTime | date:'MMM d, HH:mm') : '—'}}</span>
+                  <span>{{t.volume}}</span>
+                  <span [class]="pnlClass(t.netPnL)">{{formatPnL(t.netPnL)}}</span>
+                </a>
+              }
+            </div>
+          }
+        }
+
+        <!-- NOTES TAB -->
+        @if (activeTab === 'notes') {
+          <div class="notes-header">
+            <p-button label="Add Note" icon="pi pi-plus" size="small" (onClick)="openAddNote()" />
+          </div>
+          @if (strategy()!.notes.length === 0) {
+            <div class="empty-tab">No notes yet. Add your first note about this strategy.</div>
+          } @else {
+            <div class="notes-list">
+              @for (note of strategy()!.notes; track note.id) {
+                <div class="note-card">
+                  <div class="note-head">
+                    <span class="note-title">{{note.title}}</span>
+                    <div class="note-actions">
+                      <span class="note-date">{{note.updatedAt | date:'MMM d, y'}}</span>
+                      <button class="icon-btn" (click)="openEditNote(note)"><i class="pi pi-pencil"></i></button>
+                      <button class="icon-btn icon-btn--danger" (click)="deleteNote(note)"><i class="pi pi-trash"></i></button>
+                    </div>
+                  </div>
+                  <div class="note-preview" [innerHTML]="note.content"></div>
+                </div>
+              }
+            </div>
+          }
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="loading-state" style="color:#475569">
+      <i class="pi pi-exclamation-circle" style="font-size:3rem"></i>
+      <p>Strategy not found.</p>
+    </div>
+  }
+</div>
+
+<!-- Edit strategy dialog -->
+<p-dialog header="Edit Strategy" [(visible)]="showEditDialog" [modal]="true" [style]="{'width':'440px'}" [draggable]="false">
+  <div class="create-form">
+    <label class="form-label">Name</label>
+    <input pInputText [(ngModel)]="editName" placeholder="Strategy name" class="w-full" />
+    <label class="form-label" style="margin-top:1rem">Description</label>
+    <textarea pTextarea [(ngModel)]="editDescription" rows="3" class="w-full" placeholder="Optional description"></textarea>
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="showEditDialog=false" />
+    <p-button label="Save" [loading]="saving" [disabled]="!editName.trim()" (onClick)="saveEdit()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Add note dialog -->
+<p-dialog header="Add Note" [(visible)]="showAddNoteDialog" [modal]="true" [style]="{'width':'640px'}" [draggable]="false">
+  <div class="create-form">
+    <label class="form-label">Title</label>
+    <input pInputText [(ngModel)]="noteTitle" placeholder="Note title" class="w-full" />
+    <label class="form-label" style="margin-top:1rem">Content</label>
+    <p-editor [(ngModel)]="noteContent" [style]="{'min-height':'200px'}" />
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="showAddNoteDialog=false" />
+    <p-button label="Add" [loading]="savingNote" [disabled]="!noteTitle.trim()" (onClick)="addNote()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Edit note dialog -->
+<p-dialog header="Edit Note" [(visible)]="showEditNoteDialog" [modal]="true" [style]="{'width':'640px'}" [draggable]="false">
+  <div class="create-form">
+    <label class="form-label">Title</label>
+    <input pInputText [(ngModel)]="editNoteTitle" placeholder="Note title" class="w-full" />
+    <label class="form-label" style="margin-top:1rem">Content</label>
+    <p-editor [(ngModel)]="editNoteContent" [style]="{'min-height':'200px'}" />
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="showEditNoteDialog=false" />
+    <p-button label="Save" [loading]="savingNote" [disabled]="!editNoteTitle.trim()" (onClick)="saveEditNote()" />
+  </ng-template>
+</p-dialog>

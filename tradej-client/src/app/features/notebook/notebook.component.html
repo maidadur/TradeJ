@@ -1,0 +1,74 @@
+<div class="notebook-page">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">Notebook</h1>
+    <span class="note-count" *ngIf="total() > 0">{{ total() }} day notes</span>
+  </div>
+
+  <!-- Month filter pills -->
+  <div class="month-filters" *ngIf="availableMonths().length > 0">
+    <button
+      class="month-pill"
+      [class.month-pill--active]="selectedMonth() === null"
+      (click)="selectMonth(null)"
+    >All</button>
+    <button
+      *ngFor="let m of availableMonths()"
+      class="month-pill"
+      [class.month-pill--active]="selectedMonth() === m"
+      (click)="selectMonth(m)"
+    >{{ formatMonthLabel(m) }}</button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-state">
+    <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>
+    <span>Loading notes...</span>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading() && notes().length === 0" class="empty-state">
+    <i class="pi pi-book" style="font-size:3rem;color:#334155"></i>
+    <p>No day notes yet. Open a trading day in Day View and start writing.</p>
+  </div>
+
+  <!-- Notes list -->
+  <div class="notes-list" *ngIf="!loading() && notes().length > 0">
+    <div *ngFor="let note of notes()" class="note-card" [class.note-card--expanded]="expandedDate === note.date">
+
+      <!-- Note header -->
+      <div class="note-header" (click)="toggleNote(note.date, note.content)">
+        <button class="expand-btn">
+          <i class="pi"
+            [class.pi-chevron-right]="expandedDate !== note.date"
+            [class.pi-chevron-down]="expandedDate === note.date"></i>
+        </button>
+        <div class="note-meta">
+          <span class="note-date">{{ formatDate(note.date) }}</span>
+          <span class="note-updated">Last edited {{ formatUpdated(note.updatedAt) }}</span>
+        </div>
+        <div class="note-preview" *ngIf="expandedDate !== note.date">
+          {{ stripHtml(note.content) | slice:0:120 }}{{ stripHtml(note.content).length > 120 ? '...' : '' }}
+        </div>
+        <span *ngIf="isSaving(note.date)" class="note-saving">
+          <i class="pi pi-spin pi-spinner"></i> Saving...
+        </span>
+      </div>
+
+      <!-- Note editor (expanded) -->
+      <div class="note-body" *ngIf="expandedDate === note.date">
+        <div class="note-saving-bar" *ngIf="isSaving(note.date)">
+          <i class="pi pi-spin pi-spinner"></i> Saving...
+        </div>
+        <p-editor
+          [ngModel]="editingContent"
+          (ngModelChange)="onContentChange(note.date, $event)"
+          [style]="{'min-height':'240px'}"
+        />
+      </div>
+
+    </div>
+  </div>
+
+</div>

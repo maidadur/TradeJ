@@ -1,0 +1,36 @@
+<div class="strategy-picker">
+  <!-- Selected chips -->
+  <div class="selected-chips">
+    @for (s of selectedList; track s.id) {
+      <a class="strategy-chip" [routerLink]="['/strategies', s.id]" (click)="$event.stopPropagation()">
+        {{s.name}}
+      </a>
+    }
+    <button class="add-btn" (click)="dropdownOpen = !dropdownOpen">
+      <i class="pi pi-plus"></i>
+      @if (selectedList.length === 0) { <span>Add strategy</span> }
+    </button>
+  </div>
+
+  <!-- Dropdown -->
+  @if (dropdownOpen) {
+    <div class="dropdown">
+      <div class="dropdown-header">
+        <span>Strategies</span>
+        <button class="dropdown-close" (click)="closeDropdown()"><i class="pi pi-times"></i></button>
+      </div>
+      @if (strategies().length === 0) {
+        <div class="dropdown-empty">No strategies in this account.</div>
+      } @else {
+        @for (s of strategies(); track s.id) {
+          <div class="dropdown-item" [class.checked]="isSelected(s.id)" (click)="toggle(s.id)">
+            <span class="check-icon">
+              @if (isSelected(s.id)) { <i class="pi pi-check"></i> }
+            </span>
+            <span>{{s.name}}</span>
+          </div>
+        }
+      }
+    </div>
+  }
+</div>

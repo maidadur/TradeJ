@@ -1,0 +1,288 @@
+@use 'theme' as *;
+
+/* ---- header ---- */
+.page-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.75rem;
+}
+.header-left { display: flex; align-items: center; gap: 1rem; }
+.page-title { font-size: $size-xl; font-weight: 700; color: $text; margin: 0; }
+.header-controls { display: flex; gap: 0.75rem; }
+
+.view-toggle {
+  display: flex; background: $bg-deeper; border: 1px solid $border;
+  border-radius: $radius-md; overflow: hidden;
+}
+.toggle-btn {
+  padding: 0.4rem 1rem; border: none; background: transparent;
+  color: $text-muted; cursor: pointer; font-size: $size-base; font-weight: 500;
+  transition: all 0.15s;
+}
+.toggle-btn.active { background: $accent; color: #fff; }
+
+/* ---- loading / empty ---- */
+.loading-state, .empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 1rem; color: $text-dim;
+  padding: 5rem; text-align: center;
+}
+
+/* ---- layout ---- */
+.content-layout {
+  display: grid;
+  grid-template-columns: 1fr 240px;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* ---- day card ---- */
+.day-card {
+  background: $bg-surface; border: 1px solid $border;
+  border-radius: $radius-lg; margin-bottom: 0.75rem; overflow: hidden;
+}
+
+.day-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.875rem 1.25rem; cursor: pointer;
+  transition: background 0.15s;
+}
+.day-header:hover { background: $bg-hover; }
+.day-header--inner { padding: 0.7rem 1rem; background: #14172200; }
+
+.expand-btn {
+  background: none; border: none; color: $text-muted;
+  cursor: pointer; padding: 0; line-height: 1; font-size: 0.8rem;
+}
+.expand-btn--sm { font-size: 0.7rem; }
+
+.day-label {
+  font-weight: 600; color: $text; font-size: 0.95rem; flex: 1;
+}
+.week-label { font-weight: 600; color: $accent-lightest; font-size: 0.95rem; flex: 1; }
+.trade-count { font-size: 0.8rem; color: $text-muted; }
+
+.day-pnl {
+  font-weight: 700; font-size: 0.95rem;
+}
+
+/* ---- day body ---- */
+.day-body { padding: 0 1.25rem 1.25rem; }
+
+.day-stats-row {
+  display: flex; gap: 1rem; margin-bottom: 1rem; align-items: flex-start;
+}
+.day-stats {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; flex: 1;
+}
+.stat-item {
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  border-radius: $radius-md; padding: 0.6rem 1rem; min-width: 100px;
+}
+.stat-label { font-size: 0.7rem; color: $text-muted; text-transform: uppercase; letter-spacing: 0.05em; }
+.stat-value { font-size: 0.95rem; font-weight: 600; color: $text; margin-top: 2px; }
+
+.day-chart {
+  flex: 0 0 260px; background: $bg-deeper; border: 1px solid $border-subtle;
+  border-radius: $radius-md; padding: 0.5rem;
+}
+
+/* ---- trade table ---- */
+.trade-table-wrap {
+  overflow-x: auto;
+  border-radius: $radius-md;
+  border: 1px solid $border-subtle;
+}
+.trade-table {
+  width: 100%; border-collapse: collapse; font-size: 0.82rem;
+}
+.trade-table th {
+  padding: 0.5rem 0.75rem; text-align: left;
+  background: $bg-deeper; color: $text-muted;
+  font-size: 0.72rem; text-transform: uppercase;
+  letter-spacing: 0.04em; white-space: nowrap;
+  border-bottom: 1px solid $border-subtle;
+}
+.trade-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(26,29,39,0.6);
+  white-space: nowrap; color: $text-secondary;
+}
+.trade-row { cursor: pointer; transition: background 0.12s; }
+.trade-row:hover td { background: $bg-hover; }
+.trade-row:last-child td { border-bottom: none; }
+.trade-time { color: #94a3b8; font-variant-numeric: tabular-nums; }
+.text-right { text-align: right; }
+
+.symbol-badge {
+  background: $bg-hover; border: 1px solid $text-dimmer;
+  border-radius: $radius-sm; padding: 2px 6px;
+  font-size: $size-sm; font-weight: 600; color: $accent-lightest;
+}
+.side-badge {
+  border-radius: 4px; padding: 2px 6px;
+  font-size: 0.7rem; font-weight: 700;
+}
+.side-badge.long  { background: $success-dark-bg; color: $success-mid; border: 1px solid $success-border; }
+.side-badge.short { background: $danger-dark-bg;  color: $danger-mid;   border: 1px solid $danger-border; }
+
+.tag-pill {
+  background: $accent-dark; color: $accent-light;
+  border-radius: 10px; padding: 1px 7px; font-size: 0.72rem;
+}
+
+/* ---- week card ---- */
+.week-card {
+  background: $bg-surface; border: 1px solid $border;
+  border-radius: $radius-lg; margin-bottom: 0.75rem; overflow: hidden;
+}
+.week-header {
+  display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.875rem 1.25rem; cursor: pointer;
+  background: #16192600; transition: background 0.15s;
+  border-bottom: 1px solid $border;
+}
+.week-header:hover { background: $bg-hover; }
+
+.week-summary-stats {
+  display: flex; flex-wrap: wrap; gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid $border-subtle;
+}
+.stat-chip {
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  border-radius: 20px; padding: 2px 10px;
+  font-size: $size-sm; color: $text-muted;
+}
+.stat-chip.positive { color: $success-mid; }
+.stat-chip.negative { color: $danger-mid; }
+.stat-chip strong   { color: $text; }
+
+.week-body { padding: 0.75rem 1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+
+.week-day-card {
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  border-radius: $radius-md; overflow: hidden;
+}
+
+/* ---- colors ---- */
+.positive { color: $success-mid; }
+.negative { color: $danger-mid; }
+
+/* ---- calendar panel ---- */
+.calendar-panel {
+  background: $bg-surface; border: 1px solid $border;
+  border-radius: $radius-lg; padding: 1rem;
+  position: sticky; top: 1rem;
+}
+.cal-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+.cal-nav-btn {
+  background: none; border: 1px solid $border; border-radius: 6px;
+  color: $text-secondary; cursor: pointer; padding: 4px 8px; transition: 0.15s;
+}
+.cal-nav-btn:hover { background: $border; }
+.cal-month-label { font-size: 0.85rem; font-weight: 600; color: $text; }
+
+.cal-dow-row {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.cal-dow { text-align: center; font-size: $size-xs; color: $text-dim; padding: 2px 0; }
+
+.cal-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px;
+}
+.cal-cell {
+  min-height: 36px; border-radius: 5px;
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 2px; font-size: 0.7rem;
+}
+.cal-cell--empty { opacity: 0; pointer-events: none; }
+.cal-cell--has-data { cursor: pointer; }
+.cal-cell--has-data:hover { border-color: $accent; }
+.cal-cell--win  { background: $success-dark-bg; border-color: $success-border; }
+.cal-cell--loss { background: $danger-dark-bg;  border-color: $danger-border; }
+
+.cal-day-num { color: $text-muted; font-size: $size-xs; line-height: 1; }
+.cal-day-pnl { font-size: 0.62rem; font-weight: 700; line-height: 1; margin-top: 1px; }
+
+/* ---- note button on day header ---- */
+.note-btn {
+  display: flex; align-items: center; gap: 0.35rem;
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  border-radius: $radius-md; color: $text-muted;
+  padding: 0.3rem 0.75rem; font-size: 0.78rem; cursor: pointer;
+  transition: all 0.15s; white-space: nowrap; flex-shrink: 0;
+}
+.note-btn:hover { border-color: $accent; color: $accent-light; }
+.note-btn--has-note {
+  background: $accent-bg; border-color: $accent-dark; color: $accent-light;
+}
+.note-btn--has-note:hover { border-color: $accent; color: #fff; }
+
+/* ---- note dialog ---- */
+.note-dialog-stats-row {
+  display: flex; gap: 1rem; align-items: stretch;
+  margin-bottom: 1rem;
+  background: $bg-deeper;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  padding: 0.875rem 1rem;
+}
+
+.note-dialog-chart {
+  flex: 0 0 260px;
+  min-width: 0;
+}
+
+.note-dialog-stats {
+  flex: 1; display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem;
+  align-content: flex-start;
+}
+
+.ndstat {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 110px;
+}
+.ndstat-label {
+  font-size: 0.7rem; color: $text-dim; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.ndstat-value {
+  font-size: 0.9rem; font-weight: 600; color: $text;
+}
+
+.note-dialog-saving {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0 0.25rem 0.75rem;
+  color: $accent-light; font-size: 0.8rem;
+}
+
+::ng-deep .note-dialog .p-dialog-header {
+  background: $bg-surface; border-bottom: 1px solid $border-subtle;
+  color: $text; font-size: 1rem; font-weight: 600;
+}
+::ng-deep .note-dialog .p-dialog-content {
+  background: $bg-surface; padding: 1.25rem;
+}
+::ng-deep .note-dialog .p-dialog-footer {
+  background: $bg-surface; border-top: 1px solid $border-subtle;
+  padding: 0.75rem 1.25rem; display: flex; justify-content: flex-end;
+}
+::ng-deep .note-dialog .ql-toolbar {
+  background: $bg-deeper; border: none;
+  border-bottom: 1px solid $border-subtle;
+}
+::ng-deep .note-dialog .ql-container {
+  background: $bg-deeper; border: none; color: $text; font-size: 0.9rem;
+}
+
+.dialog-close-btn {
+  display: flex; align-items: center; gap: 0.4rem;
+  background: $accent; border: none; border-radius: $radius-md;
+  color: #fff; padding: 0.45rem 1.25rem; font-size: $size-sm;
+  font-weight: 600; cursor: pointer; transition: background 0.15s;
+}
+.dialog-close-btn:hover { background: $accent-mid; }

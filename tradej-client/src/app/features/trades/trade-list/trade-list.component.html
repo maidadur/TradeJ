@@ -1,0 +1,140 @@
+<div class="trade-list-page">
+  <div class="page-header">
+    <h1 class="page-title">Trades</h1>
+    <span class="trade-count" *ngIf="totalCount() > 0">{{totalCount()}} trades</span>
+  </div>
+
+  @if (!accountId()) {
+    <div class="empty-state">
+      <i class="pi pi-wallet" style="font-size:3rem;color:#475569"></i>
+      <p>Select an account from the sidebar to view trades.</p>
+    </div>
+  } @else {
+    <!-- Filters -->
+    <div class="filters-bar">
+      <input
+        pInputText
+        placeholder="Symbol..."
+        [(ngModel)]="filter.symbol"
+        (keyup.enter)="applyFilters()"
+        class="filter-input"
+      />
+      <p-select
+        [options]="directionOptions"
+        [(ngModel)]="filter.direction"
+        placeholder="Direction"
+        [showClear]="true"
+        (ngModelChange)="applyFilters()"
+        [style]="{'min-width':'130px'}"
+      />
+      <p-select
+        [options]="statusOptions"
+        [(ngModel)]="filter.status"
+        placeholder="Status"
+        [showClear]="true"
+        (ngModelChange)="applyFilters()"
+        [style]="{'min-width':'120px'}"
+      />
+      <p-datepicker
+        [(ngModel)]="dateFrom"
+        placeholder="From date"
+        dateFormat="yy-mm-dd"
+        (ngModelChange)="applyFilters()"
+        [style]="{'min-width':'150px'}"
+      />
+      <p-datepicker
+        [(ngModel)]="dateTo"
+        placeholder="To date"
+        dateFormat="yy-mm-dd"
+        (ngModelChange)="applyFilters()"
+        [style]="{'min-width':'150px'}"
+      />
+      <p-button
+        icon="pi pi-times"
+        severity="secondary"
+        [text]="true"
+        (onClick)="clearFilters()"
+        pTooltip="Clear filters"
+      />
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <p-table
+        [value]="trades()"
+        [loading]="loading()"
+        styleClass="p-datatable-sm p-datatable-gridlines trade-table"
+        sortField="entryTime"
+        [sortOrder]="-1"
+      >
+        <ng-template #header>
+          <tr>
+            <th pSortableColumn="entryTime" style="width:150px">
+              Date <p-sortIcon field="entryTime" />
+            </th>
+            <th pSortableColumn="symbol">Symbol <p-sortIcon field="symbol" /></th>
+            <th style="width:80px">Dir</th>
+            <th class="text-right" pSortableColumn="netPnL">
+              Net P&amp;L <p-sortIcon field="netPnL" />
+            </th>
+            <th class="text-right">Entry</th>
+            <th class="text-right">Exit</th>
+            <th class="text-right">Volume</th>
+            <th class="text-right">Duration</th>
+            <th>Strategy</th>
+            <th style="width:50px"></th>
+          </tr>
+        </ng-template>
+        <ng-template #body let-trade>
+          <tr class="trade-row" (click)="openTrade(trade.id)" style="cursor:pointer">
+            <td>
+              <span>{{trade.entryTime | date:'MMM d, y'}}</span>
+              <br><span class="time-sub">{{trade.entryTime | date:'HH:mm'}}</span>
+            </td>
+            <td><strong>{{trade.symbol}}</strong></td>
+            <td>
+              <span class="dir-badge" [class.dir-long]="trade.direction==='Long'" [class.dir-short]="trade.direction==='Short'">
+                {{trade.direction === 'Long' ? '▲ Long' : '▼ Short'}}
+              </span>
+            </td>
+            <td class="text-right num">
+              <strong [class.pnl-pos]="trade.netPnL > 0" [class.pnl-neg]="trade.netPnL < 0">{{formatPnL(trade.netPnL)}}</strong>
+            </td>
+            <td class="text-right num">{{trade.entryPrice | number:'1.2-8'}}</td>
+            <td class="text-right num">{{trade.exitPrice != null ? (trade.exitPrice | number:'1.2-8') : '—'}}</td>
+            <td class="text-right num">{{trade.volume}}</td>
+            <td class="text-right num">{{formatDuration(trade.entryTime, trade.exitTime)}}</td>
+            <td class="strategy-cell">{{getStrategyNames(trade.strategyIds)}}</td>
+            <td>
+              @if (trade.notes) {
+                <i class="pi pi-file-edit" style="color:#6366f1" title="Has notes"></i>
+              }
+            </td>
+          </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+          <tr>
+            <td colspan="10">
+              <div class="empty-state" style="padding:2rem">
+                <i class="pi pi-inbox" style="font-size:2rem;color:#475569"></i>
+                <p>No trades found. Try importing trades or adjusting your filters.</p>
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+
+    <!-- Pagination -->
+    @if (totalCount() > pageSize) {
+      <p-paginator
+        [rows]="pageSize"
+        [totalRecords]="totalCount()"
+        [first]="(currentPage() - 1) * pageSize"
+        (onPageChange)="onPageChange($event)"
+        [rowsPerPageOptions]="[25, 50, 100]"
+        styleClass="trade-paginator"
+      />
+    }
+  }
+</div>

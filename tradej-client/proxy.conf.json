@@ -1,0 +1,13 @@
+{
+  "/api": {
+    "target": "http://localhost:5237",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  },
+  "/screenshots": {
+    "target": "http://localhost:5237",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

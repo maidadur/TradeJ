@@ -1,0 +1,136 @@
+<div class="tag-picker">
+  @if (loading()) {
+    <div class="tp-loading">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+  } @else if (categories().length === 0) {
+    <div class="tp-empty">
+      <span>No tag categories yet.</span>
+      <button class="btn-add-first" (click)="openAddCategory()">+ Create first category</button>
+    </div>
+  } @else {
+    @for (cat of categories(); track cat.id) {
+      <div class="cat-section">
+        <!-- Category header -->
+        <div class="cat-header">
+          <span class="cat-dot" [style.background]="cat.color"></span>
+          <span class="cat-name">{{ cat.name }}</span>
+          <div class="cat-menu-wrap">
+            <button class="cat-menu-btn" (click)="toggleCatMenu(cat.id)">···</button>
+            @if (catMenuOpen === cat.id) {
+              <div class="cat-menu">
+                <button (click)="startEditCategory(cat)">Rename</button>
+                <button class="danger" (click)="deleteCategory(cat)">Delete</button>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Chips + input row -->
+        <div class="tag-input-wrap">
+          <div class="chips-and-input">
+            @for (tag of getSelected(cat.id); track tag.id) {
+              <span class="chip">
+                {{ tag.name }}
+                <button class="chip-remove" (click)="removeTag(cat.id, tag.id)">×</button>
+              </span>
+            }
+            <input
+              class="tag-input"
+              [placeholder]="getSelected(cat.id).length === 0 ? 'Select or type to create…' : ''"
+              [(ngModel)]="filterText[cat.id]"
+              (focus)="openDropdown(cat.id)"
+              (blur)="scheduleClose(cat.id)"
+              (input)="openDropdown(cat.id)"
+              (keydown.enter)="handleEnter(cat)"
+              (keydown.escape)="openDropdownId = null"
+            />
+          </div>
+
+          <!-- Dropdown -->
+          @if (openDropdownId === cat.id) {
+            <div class="tag-dropdown">
+              @for (tag of getFiltered(cat); track tag.id) {
+                <div class="tag-option" (mousedown)="selectTag(cat, tag)">
+                  <span>{{ tag.name }}</span>
+                  <button class="opt-del" (mousedown)="deleteTagOption(cat, tag.id, $event)" title="Delete tag">×</button>
+                </div>
+              }
+              @if (canCreate(cat)) {
+                <div class="tag-option tag-option--create" (mousedown)="createAndSelect(cat)">
+                  <i class="pi pi-plus-circle"></i>
+                  Create "{{ filterText[cat.id] }}"
+                </div>
+              }
+              @if (getFiltered(cat).length === 0 && !canCreate(cat)) {
+                <div class="tag-option tag-option--empty">
+                  {{ (filterText[cat.id] || '').trim() ? 'No matching tags' : 'No tags yet — type to create one' }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <button class="btn-add-cat" (click)="openAddCategory()">+ Add category</button>
+  }
+
+  <!-- Add Category Dialog -->
+  @if (showAddCatDialog) {
+    <div class="overlay" (click)="$event.target === $event.currentTarget && (showAddCatDialog = false)">
+      <div class="dialog">
+        <h4>New category</h4>
+        <input
+          class="dialog-input"
+          [(ngModel)]="newCatName"
+          placeholder="Category name"
+          (keydown.enter)="addCategory()"
+          autofocus
+        />
+        <div class="color-swatches">
+          @for (c of colorOptions; track c) {
+            <button
+              class="swatch"
+              [style.background]="c"
+              [class.active]="newCatColor === c"
+              (click)="newCatColor = c"
+            ></button>
+          }
+        </div>
+        <div class="dialog-actions">
+          <button class="btn-cancel" (click)="showAddCatDialog = false">Cancel</button>
+          <button class="btn-primary" (click)="addCategory()" [disabled]="!newCatName.trim()">Create</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Edit Category Dialog -->
+  @if (editingCat) {
+    <div class="overlay" (click)="$event.target === $event.currentTarget && (editingCat = null)">
+      <div class="dialog">
+        <h4>Edit category</h4>
+        <input
+          class="dialog-input"
+          [(ngModel)]="editCatName"
+          (keydown.enter)="saveEditCategory()"
+        />
+        <div class="color-swatches">
+          @for (c of colorOptions; track c) {
+            <button
+              class="swatch"
+              [style.background]="c"
+              [class.active]="editCatColor === c"
+              (click)="editCatColor = c"
+            ></button>
+          }
+        </div>
+        <div class="dialog-actions">
+          <button class="btn-cancel" (click)="editingCat = null">Cancel</button>
+          <button class="btn-primary" (click)="saveEditCategory()" [disabled]="!editCatName.trim()">Save</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

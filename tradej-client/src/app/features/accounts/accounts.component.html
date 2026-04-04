@@ -1,0 +1,193 @@
+<p-toast />
+<p-confirmdialog />
+<div class="accounts-page">
+  <div class="page-header">
+    <h1 class="page-title">Accounts</h1>
+    <p-button
+      label="Add Account"
+      icon="pi pi-plus"
+      (onClick)="openCreateDialog()"
+    />
+  </div>
+
+  <div class="table-card">
+    <p-table
+      [value]="accounts()"
+      [loading]="loading()"
+      styleClass="p-datatable-sm p-datatable-gridlines"
+    >
+      <ng-template #header>
+        <tr>
+          <th>Name</th>
+          <th>Broker</th>
+          <th>Account Number</th>
+          <th>Currency</th>
+          <th class="text-center">Trades</th>
+          <th class="text-center">Sync</th>
+          <th class="text-center">Status</th>
+          <th style="width:120px">Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template #body let-account>
+        <tr>
+          <td><strong>{{account.name}}</strong></td>
+          <td>
+            <span class="broker-badge" [attr.data-broker]="account.broker.toLowerCase()">
+              {{account.broker}}
+            </span>
+          </td>
+          <td class="mono">{{account.accountNumber}}</td>
+          <td>{{account.currency}}</td>
+          <td class="text-center">{{account.tradeCount}}</td>
+          <td class="text-center">
+            @if (account.broker === 'MT5' && account.mt5Server && account.hasMT5InvestorPassword) {
+              <span class="live-badge" style="background:#6366f1" title="MT5 Sync ready">&#x25CF; Sync</span>
+            } @else if (account.broker === 'MT5' && account.mt5Server) {
+              <span class="not-configured" title="MT5 Server set — add investor password to enable sync">Server only</span>
+            } @else if (account.broker === 'MT5' && account.metaApiAccountId && account.hasMetaApiToken) {
+              <span class="live-badge" title="MetaApi live import configured">● Live</span>
+            } @else if (account.broker === 'MT5') {
+              <span class="not-configured">—</span>
+            }
+          </td>
+          <td class="text-center">
+            <p-tag [value]="account.isActive ? 'Active' : 'Inactive'" [severity]="account.isActive ? 'success' : 'secondary'" />
+          </td>
+          <td>
+            <div class="action-buttons">
+              <p-button icon="pi pi-pencil" [text]="true" size="small" (onClick)="openEditDialog(account)" />
+              <p-button icon="pi pi-trash" [text]="true" size="small" severity="danger" (onClick)="confirmDelete(account)" />
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template #emptymessage>
+        <tr>
+          <td colspan="8">
+            <div class="empty-state">
+              <i class="pi pi-wallet" style="font-size:2.5rem;color:#475569"></i>
+              <p>No accounts yet. Add your first trading account.</p>
+            </div>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>
+
+<!-- Create / Edit Dialog -->
+<p-dialog
+  [header]="editingAccount ? 'Edit Account' : 'Add Account'"
+  [(visible)]="showDialog"
+  [modal]="true"
+  [style]="{'width':'520px'}"
+>
+  <div class="dialog-form">
+    <div class="form-group">
+      <label class="form-label">Account Name</label>
+      <input pInputText [(ngModel)]="form.name" placeholder="e.g. My Prop Account" class="w-full" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Broker</label>
+      <p-select
+        [options]="brokerOptions"
+        [(ngModel)]="form.broker"
+        placeholder="Select broker"
+        [style]="{'width':'100%'}"
+        [disabled]="!!editingAccount"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Account Number</label>
+      <input pInputText [(ngModel)]="form.accountNumber" placeholder="12345678" class="w-full" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Currency</label>
+      <p-select
+        [options]="currencyOptions"
+        [(ngModel)]="form.currency"
+        placeholder="USD"
+        [style]="{'width':'100%'}"
+      />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Initial Balance</label>
+      <input pInputText type="number" [(ngModel)]="form.initialBalance" placeholder="50000" class="w-full" />
+    </div>
+    @if (editingAccount) {
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <p-select
+          [options]="statusOptions"
+          [(ngModel)]="formIsActive"
+          [style]="{'width':'100%'}"
+        />
+      </div>
+    }
+    @if (form.broker === 'MT5') {
+      <div class="meta-api-section">
+        <div class="meta-api-title">
+          <i class="pi pi-desktop"></i> MT5 Sync
+        </div>
+        <div class="form-group">
+          <label class="form-label">MT5 Server</label>
+          <input pInputText [(ngModel)]="form.mt5Server"
+            placeholder="e.g. ICMarkets-Live01" class="w-full" />
+          <div class="meta-api-hint">Find it in MT5: File &rarr; Open an Account (shown under your broker).</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            Investor Password
+            @if (editingAccount?.hasMT5InvestorPassword) {
+              <span class="token-set">(saved &ndash; type to replace)</span>
+            }
+          </label>
+          <input pInputText type="password" [(ngModel)]="form.mt5InvestorPassword"
+            [placeholder]="editingAccount?.hasMT5InvestorPassword ? '••••••••' : 'Read-only investor password'"
+            class="w-full" autocomplete="new-password" />
+        </div>
+      </div>
+    }
+    @if (form.broker === 'MT5') {
+      <div class="meta-api-section">
+        <div class="meta-api-title">
+          <i class="pi pi-link"></i> MT5 Live Import <span class="meta-api-sub">(via MetaApi — optional)</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MetaApi Account ID</label>
+          <input pInputText [(ngModel)]="form.metaApiAccountId"
+            placeholder="e.g. 1a2b3c4d5e6f" class="w-full" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">
+            MetaApi Token
+            @if (editingAccount?.hasMetaApiToken) {
+              <span class="token-set">(saved &ndash; type to replace)</span>
+            }
+          </label>
+          <input pInputText type="password" [(ngModel)]="form.metaApiToken"
+            [placeholder]="editingAccount?.hasMetaApiToken ? '••••••••' : 'Paste token'"
+            class="w-full" autocomplete="new-password" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Region</label>
+          <p-select [options]="regionOptions" [(ngModel)]="form.metaApiRegion"
+            optionLabel="label" optionValue="value" [style]="{'width':'100%'}" />
+        </div>
+        <div class="meta-api-hint">
+          Get credentials at <strong>metaapi.cloud</strong>: add your MT5 account, then copy the Account ID and API token.
+        </div>
+      </div>
+    }
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="showDialog = false" />
+    <p-button
+      [label]="editingAccount ? 'Save Changes' : 'Create Account'"
+      icon="pi pi-check"
+      (onClick)="saveAccount()"
+      [loading]="saving()"
+      [disabled]="!form.name || !form.broker"
+    />
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,176 @@
+@use 'theme' as *;
+
+.page-header { margin-bottom: 1.5rem; }
+.page-title { font-size: $size-xl; font-weight: 700; margin: 0; }
+
+/* ── Live Section ── */
+.live-section {
+  background: $bg-deepest;
+  border: 1px solid $accent-dark;
+  border-radius: $radius-lg;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+}
+.live-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: $success;
+  box-shadow: 0 0 6px $success;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-title { font-size: $size-md; font-weight: 700; color: $accent-light; margin: 0; }
+.live-sub { font-size: $size-sm; color: $text-dim; }
+
+.live-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.25rem; }
+.live-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 1rem;
+}
+.date-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.live-result {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 1rem;
+}
+.live-idle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: $text-muted;
+  padding: 0.5rem;
+  p { margin: 0; font-size: 0.85rem; line-height: 1.5; }
+}
+.live-idle-sub { font-size: 0.75rem !important; color: $text-dimmer !important; }
+
+.sync-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #16172200;
+  border: 1px solid $accent-darker;
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  color: $accent-light;
+  margin-bottom: 1rem;
+  i { color: $accent; }
+  code { background: $accent-bg; padding: 0.15rem 0.4rem; border-radius: $radius-sm; font-size: 0.78rem; }
+}
+
+.live-setup-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.875rem 1rem;
+  font-size: $size-base;
+  color: $text-muted;
+  margin-bottom: 1.5rem;
+
+  i { color: $accent-mid; font-size: 1.1rem; }
+  a { color: $accent; }
+}
+
+/* ── CSV Import ── */
+.import-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+.import-card, .result-card, .instructions-card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.5rem;
+}
+
+.card-title { font-size: $size-md; font-weight: 600; margin: 0 0 1.25rem; color: $text; }
+
+.broker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1.25rem; }
+
+.broker-card {
+  background: $bg-deeper;
+  border: 2px solid $border;
+  border-radius: $radius-md;
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: center;
+
+  &:hover { border-color: $accent-mid; }
+  &.selected { border-color: $accent; background: $accent-bg; }
+}
+.broker-name { font-weight: 700; font-size: $size-base; color: $text; }
+.broker-desc { font-size: 0.7rem; color: $text-muted; margin-top: 2px; }
+
+.form-group { margin-bottom: 1rem; }
+.form-label { display: block; font-size: $size-sm; text-transform: uppercase; letter-spacing: 0.05em; color: $text-muted; margin-bottom: 0.4rem; }
+
+.format-hint {
+  display: flex;
+  gap: 0.75rem;
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 0.8rem;
+  color: $text-secondary;
+
+  i { color: $accent; margin-top: 2px; }
+  p { margin: 4px 0 0; font-size: $size-sm; color: $text-muted; }
+}
+
+.drop-zone {
+  border: 2px dashed $border;
+  border-radius: $radius-md;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: $text-muted;
+  text-align: center;
+
+  &:hover { border-color: $accent; background: $accent-bg; }
+  &.has-file { border-color: $success-mid; background: $success-dark-bg; color: $success; }
+}
+.w-full { width: 100%; }
+
+/* Result */
+.result-card.has-errors { border-color: #f59e0b; }
+.result-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.result-header h3, .result-header strong { margin: 0; font-size: 1rem; }
+.result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1.25rem; }
+.result-stat { text-align: center; background: $bg-deeper; padding: 0.75rem; border-radius: $radius-md; }
+.result-value { display: block; font-size: 1.75rem; font-weight: 700; }
+.result-label { font-size: 0.7rem; text-transform: uppercase; color: $text-muted; }
+
+.error-list { background: $danger-deepest; border: 1px solid $danger-border; border-radius: $radius-md; padding: 0.75rem; margin-bottom: 1rem; max-height: 200px; overflow-y: auto; }
+.error-title { font-size: $size-sm; font-weight: 600; color: $danger; margin-bottom: 0.5rem; }
+.error-item { font-size: $size-sm; color: $danger-light; padding: 2px 0; font-family: monospace; }
+
+.view-trades-link { display: inline-flex; align-items: center; gap: 0.5rem; color: $accent; text-decoration: none; font-size: $size-base; }
+
+/* Instructions */
+.instructions-card h3 { margin: 0 0 1rem; font-size: $size-base; text-transform: uppercase; letter-spacing: 0.05em; color: $text-muted; }
+.how-to-item { margin-bottom: 1rem; }
+.how-to-item strong { color: $accent-light; font-size: $size-base; }
+.how-to-item p { color: $text-muted; font-size: 0.8rem; margin: 4px 0 0; line-height: 1.5; }

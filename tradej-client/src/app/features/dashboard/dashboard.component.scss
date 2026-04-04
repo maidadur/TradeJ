@@ -1,0 +1,201 @@
+@use 'theme' as *;
+
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.page-title { font-size: $size-xl; font-weight: 700; color: $text; margin: 0; }
+.header-controls { display: flex; gap: 0.75rem; }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) repeat(2, 1.5fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* stat-card base already in global styles.scss */
+.stat-card .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-muted;
+  margin-bottom: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.stat-card .value { font-size: $size-xl; font-weight: 700; }
+.stat-card .sub { font-size: $size-sm; color: $text-muted; margin-top: 4px; }
+
+.trade-badge {
+  background: $border; color: $text-secondary;
+  border-radius: 99px; padding: 1px 7px;
+  font-size: 0.68rem; font-weight: 600; line-height: 1.4;
+}
+
+.wl-sub { display: flex; align-items: center; gap: 0.3rem; margin-top: 4px; }
+.wl-sub .sep { color: $text-dimmer; }
+
+/* Win/Loss proportion bar */
+.win-loss-bar {
+  display: flex;
+  border-radius: 4px;
+  overflow: hidden;
+  height: 8px;
+  margin-top: 0.6rem;
+  gap: 2px;
+}
+.win-loss-bar--labeled {
+  height: 28px;
+  border-radius: 6px;
+  margin-top: 0.75rem;
+  position: relative;
+}
+.bar-segment {
+  transition: width 0.4s ease;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  min-width: 8px;
+}
+.bar-win  { background: $success-mid; }
+.bar-loss { background: $danger-mid; justify-content: flex-end; }
+.bar-label {
+  font-size: 0.72rem; font-weight: 700;
+  color: #fff; padding: 0 8px;
+  white-space: nowrap; overflow: hidden;
+}
+.bar-label--right { text-align: right; }
+
+/* Combined cards */
+.stat-card--wide {}
+.combined-main {
+  font-size: $size-xl; font-weight: 700; color: $text;
+}
+.combined-row {
+  display: flex; align-items: baseline; gap: 0.5rem;
+  font-size: 1.15rem; font-weight: 700; margin-top: 2px;
+}
+.sep-mid { color: $text-dim; font-weight: 400; }
+
+.charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+
+.chart-card, .calendar-card, .table-card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.chart-card--full { grid-column: 1 / -1; }
+
+.line-chart-wrap { position: relative; }
+
+.chart-title {
+  font-size: $size-base;
+  font-weight: 600;
+  color: $text-secondary;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.empty-state, .loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: $text-dim;
+  padding: 4rem;
+  text-align: center;
+}
+
+.calendar-grid { display: none; } /* replaced by big-cal */
+
+/* ---- Big Tradezella-style calendar ---- */
+.big-cal-card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.big-cal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;
+}
+.big-cal-nav { display: flex; align-items: center; gap: 0.5rem; }
+.cal-nav-btn {
+  background: none; border: 1px solid $border; border-radius: 6px;
+  color: $text-secondary; cursor: pointer; padding: 4px 8px;
+  display: flex; align-items: center; transition: 0.15s;
+  &:hover { background: $border; }
+}
+.big-cal-month { font-size: $size-md; font-weight: 700; color: $text; min-width: 140px; text-align: center; }
+.this-month-btn {
+  border: 1px solid $border; border-radius: 6px;
+  background: none; color: $text-secondary; padding: 4px 12px;
+  cursor: pointer; font-size: 0.82rem; transition: 0.15s;
+  &:hover { background: $border; color: $text; }
+}
+
+.big-cal-stats { display: flex; align-items: center; gap: 0.6rem; }
+.cal-stats-label { font-size: 0.8rem; color: $text-muted; font-weight: 500; }
+.cal-stats-pnl { font-size: 0.95rem; font-weight: 700; }
+.cal-stats-days {
+  background: $border; color: $text-secondary;
+  border-radius: 10px; padding: 1px 8px; font-size: $size-sm;
+}
+
+.big-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr) 100px;
+}
+
+.cal-dow-hdr, .cal-week-hdr {
+  text-align: center; padding: 0.4rem 0;
+  font-size: 0.72rem; color: $text-dim;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  border-bottom: 1px solid $border;
+}
+
+.cal-cell {
+  min-height: 90px;
+  border: 1px solid $border-subtle;
+  padding: 6px 8px;
+  display: flex; flex-direction: column; gap: 2px;
+  cursor: default;
+  transition: background 0.12s;
+  &:hover { background: $bg-hover; }
+}
+.cal-cell--empty { background: transparent; border-color: transparent; cursor: default; }
+.cal-cell--empty:hover { background: transparent; }
+.cal-cell--win  { background: rgba(34,197,94,0.06); border-color: rgba(34,197,94,0.2); }
+.cal-cell--loss { background: rgba(239,68,68,0.06);  border-color: rgba(239,68,68,0.2); }
+
+.cal-cell-top { display: flex; justify-content: flex-end; }
+.cal-cell-day {
+  font-size: 0.78rem; color: $text-muted; font-weight: 500;
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+}
+.cal-cell-day--today { background: $accent; color: #fff; font-weight: 700; }
+
+.cal-cell-pnl { font-size: 0.95rem; font-weight: 700; line-height: 1.2; }
+.cal-cell-meta { font-size: 0.72rem; color: $text-muted; }
+
+.cal-week-summary {
+  background: $bg-deeper; border: 1px solid $border-subtle;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 3px; padding: 0.5rem;
+  min-height: 90px;
+}
+.week-label { font-size: 0.7rem; color: $text-dim; text-transform: uppercase; letter-spacing: 0.03em; }
+.week-pnl   { font-size: 0.95rem; font-weight: 700; }
+.week-days  { font-size: 0.7rem; color: $text-muted; background: $bg-hover; border-radius: 10px; padding: 1px 7px; }
+
+.wr-bar { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; }
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.wins-losses { font-size: 0.8rem; }

@@ -1,0 +1,66 @@
+// ─── Backgrounds ───────────────────────────────────────────
+$bg-page:     #0f1117;   // main app background
+$bg-deepest:  #0f0e1a;   // darkest sections (e.g. mt5 config panel)
+$bg-deeper:   #12151f;   // table headers, toolbars, info items
+$bg-surface:  #1a1d27;   // cards, panels, editor
+$bg-row-alt:  #161924;   // alternating table row
+$bg-hover:    #1e2235;   // hover state / cell inner borders
+
+// ─── Borders ───────────────────────────────────────────────
+$border:        #2d3148;  // default border
+$border-subtle: #1e2235;  // inner / subtle border (same as $bg-hover)
+$border-accent: #312e81;  // accent-colored border
+
+// ─── Text ──────────────────────────────────────────────────
+$text:           #e2e8f0;  // primary text
+$text-secondary: #94a3b8;  // secondary / chart titles
+$text-muted:     #64748b;  // muted / form labels
+$text-dim:       #475569;  // dimmed text
+$text-dimmer:    #334155;  // very dim separators
+
+// ─── Accent (indigo) ───────────────────────────────────────
+$accent:          #6366f1;
+$accent-light:    #a5b4fc;
+$accent-lightest: #c7d2fe;
+$accent-mid:      #4338ca;
+$accent-darker:   #3730a3;
+$accent-dark:     #312e81;  // active nav / accent border
+$accent-bg:       #1e1b4b;  // accent-tinted background
+
+// ─── Success (green) ───────────────────────────────────────
+$success:         #4ade80;
+$success-mid:     #22c55e;
+$success-bg:      #1a3a2a;
+$success-dark-bg: #052e16;
+$success-border:  #166534;
+
+// ─── Danger (red) ──────────────────────────────────────────
+$danger:          #f87171;
+$danger-mid:      #ef4444;
+$danger-light:    #fca5a5;
+$danger-bg:       #3a1c1c;
+$danger-dark-bg:  #2d0707;
+$danger-deepest:  #1a0a0a;
+$danger-border:   #7f1d1d;
+
+// ─── Warning ───────────────────────────────────────────────
+$warning: #f59e0b;
+
+// ─── Broker badge colors ───────────────────────────────────
+$mt5-bg:    #1e3a5f;
+$mt5-color: #60a5fa;
+// ctrader → use $success-bg / $success
+// bybit   → use $danger-bg  / $danger
+
+// ─── Border radius ─────────────────────────────────────────
+$radius-sm: 4px;
+$radius-md: 8px;
+$radius-lg: 12px;
+
+// ─── Font sizes ────────────────────────────────────────────
+$size-xs:   0.65rem;
+$size-sm:   0.75rem;
+$size-base: 0.875rem;
+$size-md:   1rem;
+$size-lg:   1.25rem;
+$size-xl:   1.5rem;

@@ -1,0 +1,100 @@
+<div class="strategy-list-page">
+  <div class="page-header">
+    <h1 class="page-title">Strategies</h1>
+    <span class="count-badge">{{strategies().length}}</span>
+    <div class="header-actions">
+      <p-button
+        label="New Strategy"
+        icon="pi pi-plus"
+        (onClick)="openCreateDialog()"
+      />
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+  } @else if (strategies().length === 0) {
+    <div class="empty-state">
+      <i class="pi pi-sitemap" style="font-size:3rem"></i>
+      <p>No strategies yet. Create your first strategy to start tracking performance by approach.</p>
+      <p-button label="Create Strategy" icon="pi pi-plus" (onClick)="openCreateDialog()" />
+    </div>
+  } @else {
+    <div class="strategies-grid">
+      @for (s of strategies(); track s.id) {
+        <a class="strategy-card" [routerLink]="['/strategies', s.id]">
+          <div class="card-image">
+            @if (s.imageUrl) {
+              <img [src]="s.imageUrl" [alt]="s.name" />
+            } @else {
+              <div class="card-image-placeholder">
+                <i class="pi pi-image"></i>
+              </div>
+            }
+          </div>
+          <div class="card-body">
+            <div class="card-name">{{s.name}}</div>
+            @if (s.description) {
+              <div class="card-desc">{{s.description}}</div>
+            }
+            <div class="card-stats">
+              <div class="stat">
+                <span class="stat-label">Trades</span>
+                <span class="stat-value">{{s.tradeCount}}</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Win Rate</span>
+                <span class="stat-value">{{s.winRate | number:'1.0-1'}}%</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">Net P&L</span>
+                <span class="stat-value" [class.pnl-pos]="s.netPnL > 0" [class.pnl-neg]="s.netPnL < 0">
+                  {{formatPnL(s.netPnL)}}
+                </span>
+              </div>
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</div>
+
+<!-- Create dialog -->
+<p-dialog
+  header="New Strategy"
+  [(visible)]="showCreateDialog"
+  [modal]="true"
+  [style]="{'width':'440px'}"
+  [draggable]="false"
+>
+  <div class="create-form">
+    <label class="form-label">Name</label>
+    <input
+      pInputText
+      [(ngModel)]="newName"
+      placeholder="Strategy name"
+      class="w-full"
+      (keydown.enter)="createStrategy()"
+    />
+    <label class="form-label" style="margin-top:1rem">Description</label>
+    <textarea
+      pTextarea
+      [(ngModel)]="newDescription"
+      placeholder="Optional description"
+      rows="3"
+      class="w-full"
+    ></textarea>
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" (onClick)="showCreateDialog=false" />
+    <p-button
+      label="Create"
+      [loading]="creating"
+      [disabled]="!newName.trim()"
+      (onClick)="createStrategy()"
+    />
+  </ng-template>
+</p-dialog>

@@ -1,0 +1,71 @@
+<div class="sidebar">
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <span class="logo-icon">📊</span>
+    <span class="logo-text">TradeJ</span>
+  </div>
+
+  <!-- Account Selector -->
+  <div class="account-section">
+    <div class="section-label">Active Account</div>
+    <p-select
+      [options]="accounts()"
+      [(ngModel)]="selectedAccount"
+      optionLabel="name"
+      placeholder="Select account"
+      class="w-full"
+      appendTo="body"
+      (ngModelChange)="onAccountChange($event)"
+      [style]="{'width':'100%'}"
+    >
+      <ng-template #selectedItem let-account>
+        <div class="account-option" *ngIf="account">
+          <span class="broker-badge" [attr.data-broker]="account.broker.toLowerCase()">
+            {{account.broker}}
+          </span>
+          <span>{{account.name}}</span>
+        </div>
+      </ng-template>
+      <ng-template #item let-account>
+        <div class="account-option">
+          <span class="broker-badge" [attr.data-broker]="account.broker.toLowerCase()">
+            {{account.broker}}
+          </span>
+          <span>{{account.name}}</span>
+        </div>
+      </ng-template>
+    </p-select>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-chart-bar"></i>
+      <span>Dashboard</span>
+    </a>
+    <a routerLink="/trades" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-list"></i>
+      <span>Trades</span>
+    </a>
+    <a routerLink="/day-view" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-calendar"></i>
+      <span>Day View</span>
+    </a>
+    <a routerLink="/notebook" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-book"></i>
+      <span>Notebook</span>
+    </a>
+    <a routerLink="/strategies" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-sitemap"></i>
+      <span>Strategies</span>
+    </a>
+    <a routerLink="/import" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-upload"></i>
+      <span>Import</span>
+    </a>
+    <a routerLink="/accounts" routerLinkActive="active" class="nav-item">
+      <i class="pi pi-wallet"></i>
+      <span>Accounts</span>
+    </a>
+  </nav>
+</div>

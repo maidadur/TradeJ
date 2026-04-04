@@ -1,0 +1,124 @@
+<p-toast />
+<div class="trade-detail-page">
+  <!-- Back nav -->
+  <a routerLink="/trades" class="back-link">
+    <i class="pi pi-arrow-left"></i> Back to Trades
+  </a>
+
+  @if (loading()) {
+    <div class="loading-state" style="padding:4rem;display:flex;justify-content:center">
+      <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>
+    </div>
+  } @else if (trade()) {
+    <div class="detail-layout">
+      <!-- Left: Trade Info -->
+      <div class="info-panel">
+        <div class="trade-header">
+          <div class="symbol-block">
+            <span class="symbol-text">{{trade()!.symbol}}</span>
+            <span class="dir-badge" [class.dir-long]="trade()!.direction==='Long'" [class.dir-short]="trade()!.direction==='Short'">
+              {{trade()!.direction === 'Long' ? '▲ Long' : '▼ Short'}}
+            </span>
+          </div>
+          <div class="pnl-block" [class.pnl-pos]="trade()!.netPnL > 0" [class.pnl-neg]="trade()!.netPnL < 0">
+            {{formatPnL(trade()!.netPnL)}}
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="info-label">Status</span>
+            <p-tag [value]="trade()!.status" [severity]="trade()!.status === 'Open' ? 'info' : 'secondary'" />
+          </div>
+          <div class="info-item">
+            <span class="info-label">Account</span>
+            <span class="info-value">{{trade()!.accountName}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Broker ID</span>
+            <span class="info-value mono">{{trade()!.brokerTradeId}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Entry Time</span>
+            <span class="info-value">{{trade()!.entryTime | date:'MMM d, y HH:mm:ss'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Exit Time</span>
+            <span class="info-value">{{trade()!.exitTime ? (trade()!.exitTime! | date:'MMM d, y HH:mm:ss') : '—'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Volume</span>
+            <span class="info-value">{{trade()!.volume}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Entry Price</span>
+            <span class="info-value mono">{{trade()!.entryPrice | number:'1.2-8'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Exit Price</span>
+            <span class="info-value mono">{{trade()!.exitPrice != null ? (trade()!.exitPrice! | number:'1.2-8') : '—'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Gross P&amp;L</span>
+            <span class="info-value" [class]="pnlClass(trade()!.grossPnL)">{{formatPnL(trade()!.grossPnL)}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Commission</span>
+            <span class="info-value pnl-neg">{{trade()!.commission | number:'1.2-2'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Swap</span>
+            <span class="info-value" [class]="pnlClass(trade()!.swap)">{{trade()!.swap | number:'1.2-2'}}</span>
+          </div>
+          <div class="info-item highlight">
+            <span class="info-label">Net P&amp;L</span>
+            <span class="info-value" [class]="pnlClass(trade()!.netPnL)"><strong>{{formatPnL(trade()!.netPnL)}}</strong></span>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="tags-section">
+          <div class="section-label" style="margin-bottom: 0.75rem">Tags</div>
+          <app-tag-picker
+            [tradeId]="trade()!.id"
+            [accountId]="trade()!.accountId"
+            [selectedTagIds]="trade()!.tagIds"
+          />
+        </div>
+
+        <!-- Strategies -->
+        <div class="tags-section">
+          <div class="section-label" style="margin-bottom: 0.75rem">Strategies</div>
+          <app-strategy-picker
+            [tradeId]="trade()!.id"
+            [accountId]="trade()!.accountId"
+            [selectedStrategyIds]="trade()!.strategyIds"
+          />
+        </div>
+      </div>
+
+      <!-- Right: Notes -->
+      <div class="notes-panel">
+        <!-- Rich Text Notes -->
+        <div class="notes-card">
+          <div class="section-header">
+            <span class="section-label">Notes</span>
+            <span class="save-indicator" [class.visible]="saving()">
+              <i class="pi pi-spin pi-spinner"></i> Saving…
+            </span>
+          </div>
+          <p-editor
+            [(ngModel)]="notesHtml"
+            (ngModelChange)="onNotesChange($event)"
+            [style]="{'min-height':'220px'}"
+          />
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="empty-state" style="padding:4rem;display:flex;flex-direction:column;align-items:center;gap:1rem;color:#475569">
+      <i class="pi pi-exclamation-circle" style="font-size:3rem"></i>
+      <p>Trade not found.</p>
+    </div>
+  }
+</div>

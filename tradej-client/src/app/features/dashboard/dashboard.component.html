@@ -1,0 +1,257 @@
+<div class="dashboard-page">
+  <!-- Header -->
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <div class="header-controls">
+      <p-select
+        [options]="yearOptions"
+        [(ngModel)]="selectedYear"
+        (ngModelChange)="load()"
+        [style]="{'min-width':'110px'}"
+      />
+      <p-select
+        [options]="monthOptions"
+        [(ngModel)]="selectedMonth"
+        optionLabel="label"
+        optionValue="value"
+        (ngModelChange)="load()"
+        [style]="{'min-width':'140px'}"
+        placeholder="All months"
+      />
+    </div>
+  </div>
+
+  @if (!accountId()) {
+    <div class="empty-state">
+      <i class="pi pi-wallet" style="font-size:3rem;color:#475569"></i>
+      <p>Select an account from the sidebar to view your dashboard.</p>
+    </div>
+  } @else if (loading()) {
+    <div class="loading-state">
+      <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>
+    </div>
+  } @else if (dashboard()) {
+    <!-- Summary Cards -->
+    <div class="stats-grid">
+
+      <!-- Net P&L -->
+      <div class="stat-card">
+        <div class="label">Net P&amp;L
+          <span class="trade-badge">{{dashboard()!.summary.totalTrades}}</span>
+        </div>
+        <div class="value" [class]="pnlClass(dashboard()!.summary.totalNetPnL)">
+          {{formatPnL(dashboard()!.summary.totalNetPnL)}}
+        </div>
+        <div class="sub wl-sub">
+          <span class="pnl-pos">{{dashboard()!.summary.winningTrades}}W</span>
+          <span class="sep">/</span>
+          <span class="pnl-neg">{{dashboard()!.summary.losingTrades}}L</span>
+          @if (dashboard()!.summary.breakEvenTrades > 0) {
+            <span class="sep">/</span>
+            <span class="pnl-zero">{{dashboard()!.summary.breakEvenTrades}}BE</span>
+          }
+        </div>
+      </div>
+
+      <!-- Win Rate -->
+      <div class="stat-card">
+        <div class="label">Trade Win %</div>
+        <div class="value">{{dashboard()!.summary.winRate | number:'1.1-1'}}%</div>
+        <div class="win-loss-bar">
+          <div class="bar-segment bar-win"
+            [style.width.%]="dashboard()!.summary.winRate"
+            title="Win"></div>
+          <div class="bar-segment bar-loss"
+            [style.width.%]="100 - dashboard()!.summary.winRate"
+            title="Loss"></div>
+        </div>
+      </div>
+
+      <!-- Profit Factor -->
+      <div class="stat-card">
+        <div class="label">Profit Factor</div>
+        <div class="value" [class]="pnlClass(dashboard()!.summary.profitFactor - 1)">
+          {{dashboard()!.summary.profitFactor | number:'1.2-2'}}
+        </div>
+        <div class="sub">Max DD {{formatPnL(-dashboard()!.summary.maxDrawdown)}}</div>
+      </div>
+
+      <!-- Avg Win / Loss combined -->
+      <div class="stat-card stat-card--wide">
+        <div class="label">Avg win/loss trade</div>
+        <div class="combined-main">{{avgWinLossRatio()}}</div>
+        <div class="win-loss-bar win-loss-bar--labeled">
+          <div class="bar-segment bar-win" [style.width.%]="avgWinBarPct()">
+            <span class="bar-label">{{formatPnL(dashboard()!.summary.averageWin)}}</span>
+          </div>
+          <div class="bar-segment bar-loss" [style.width.%]="100 - avgWinBarPct()">
+            <span class="bar-label bar-label--right">{{formatPnL(dashboard()!.summary.averageLoss)}}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Largest Win / Loss combined -->
+      <div class="stat-card stat-card--wide">
+        <div class="label">Largest win/loss</div>
+        <div class="combined-row">
+          <span class="pnl-pos">{{formatPnL(dashboard()!.summary.largestWin)}}</span>
+          <span class="sep-mid">/</span>
+          <span class="pnl-neg">{{formatPnL(dashboard()!.summary.largestLoss)}}</span>
+        </div>
+        <div class="win-loss-bar win-loss-bar--labeled">
+          <div class="bar-segment bar-win" [style.width.%]="largestWinBarPct()">
+            <span class="bar-label">Best</span>
+          </div>
+          <div class="bar-segment bar-loss" [style.width.%]="100 - largestWinBarPct()">
+            <span class="bar-label bar-label--right">Worst</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ===== Big Calendar (Tradezella-style) ===== -->
+    <div class="big-cal-card">
+      <!-- Calendar header -->
+      <div class="big-cal-header">
+        <div class="big-cal-nav">
+          <button class="cal-nav-btn" (click)="prevCalMonth()"><i class="pi pi-angle-left"></i></button>
+          <span class="big-cal-month">{{calMonthLabel()}}</span>
+          <button class="cal-nav-btn" (click)="nextCalMonth()"><i class="pi pi-angle-right"></i></button>
+          <button class="this-month-btn" (click)="goToThisMonth()">This month</button>
+        </div>
+        @if (calMonthStats(); as ms) {
+          <div class="big-cal-stats">
+            <span class="cal-stats-label">Monthly stats:</span>
+            <span class="cal-stats-pnl" [class]="pnlClass(ms.netPnL)">
+              {{formatPnLShort(ms.netPnL)}}
+            </span>
+            <span class="cal-stats-days">{{ms.tradingDays}} {{ms.tradingDays === 1 ? 'day' : 'days'}}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Day-of-week headers (7 cols + 1 week summary) -->
+      <div class="big-cal-grid">
+        <div class="cal-dow-hdr" *ngFor="let d of ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']">{{d}}</div>
+        <div class="cal-week-hdr"></div>
+
+        <!-- Rows -->
+        @for (row of calendarRows(); track row.weekNum) {
+          @for (cell of row.cells; track ($index)) {
+            @if (!cell) {
+              <div class="cal-cell cal-cell--empty"></div>
+            } @else {
+              <div class="cal-cell"
+                [class.cal-cell--win]="cell.stats && cell.stats.netPnL > 0"
+                [class.cal-cell--loss]="cell.stats && cell.stats.netPnL < 0">
+                <div class="cal-cell-top">
+                  <span class="cal-cell-day" [class.cal-cell-day--today]="cell.isToday">
+                    {{cell.day}}
+                  </span>
+                </div>
+                @if (cell.stats) {
+                  <div class="cal-cell-pnl" [class]="pnlClass(cell.stats.netPnL)">
+                    {{formatPnLShort(cell.stats.netPnL)}}
+                  </div>
+                  <div class="cal-cell-meta">{{cell.stats.tradeCount}} trades</div>
+                  <div class="cal-cell-meta">
+                    {{cell.stats.tradeCount > 0 ? (cell.stats.winCount / cell.stats.tradeCount * 100 | number:'1.0-0') : 0}}%
+                  </div>
+                }
+              </div>
+            }
+          }
+          <!-- Week summary cell -->
+          <div class="cal-week-summary">
+            <div class="week-label">Week {{row.weekNum}}</div>
+            <div class="week-pnl" [class]="pnlClass(row.weekPnL)">
+              {{formatPnLShort(row.weekPnL)}}
+            </div>
+            <div class="week-days">{{row.tradingDays}} {{row.tradingDays === 1 ? 'day' : 'days'}}</div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="charts-row">
+      <!-- Monthly P&L Chart -->
+      @if (!selectedMonth && dashboard()!.monthlyStats.length > 0) {
+        <div class="chart-card">
+          <h3 class="chart-title">Monthly P&amp;L</h3>
+          <p-chart type="bar" [data]="monthlyChartData()" [options]="barChartOptions" height="240px" />
+        </div>
+      }
+
+      <!-- Symbol Performance -->
+      @if (dashboard()!.symbolStats.length > 0) {
+        <div class="chart-card">
+          <h3 class="chart-title">P&amp;L by Symbol</h3>
+          <p-chart type="bar" [data]="symbolChartData()" [options]="horizontalBarOptions" height="240px" />
+        </div>
+      }
+    </div>
+
+    <!-- Daily Cumulative P&L Chart -->
+    @if (cumulativePnLChartData(); as chartData) {
+      <div class="chart-card chart-card--full">
+        <h3 class="chart-title">Daily net cumulative P&amp;L</h3>
+        <div class="line-chart-wrap">
+          <p-chart type="line" [data]="chartData" [options]="lineChartOptions" height="200px" />
+        </div>
+      </div>
+    }
+
+    <!-- Account Balance Chart -->
+    @if (accountBalanceChartData(); as chartData) {
+      <div class="chart-card chart-card--full">
+        <h3 class="chart-title">Account balance</h3>
+        <div class="line-chart-wrap">
+          <p-chart type="line" [data]="chartData" [options]="balanceLineOptions" height="200px" />
+        </div>
+      </div>
+    }
+
+    <!-- Symbol Stats Table -->
+    @if (dashboard()!.symbolStats.length > 0) {
+      <div class="table-card">
+        <h3 class="chart-title">Symbol Breakdown</h3>
+        <p-table
+          [value]="dashboard()!.symbolStats"
+          [scrollable]="true"
+          scrollHeight="320px"
+          styleClass="p-datatable-sm p-datatable-gridlines"
+        >
+          <ng-template #header>
+            <tr>
+              <th>Symbol</th>
+              <th class="text-center">Trades</th>
+              <th class="text-center">Win Rate</th>
+              <th class="text-right">Net P&amp;L</th>
+            </tr>
+          </ng-template>
+          <ng-template #body let-row>
+            <tr>
+              <td><strong>{{row.symbol}}</strong></td>
+              <td class="text-center">
+                <span class="wins-losses">
+                  <span class="pnl-pos">{{row.winCount}}W</span> /
+                  <span class="pnl-neg">{{row.lossCount}}L</span>
+                </span>
+              </td>
+              <td>
+                <div class="wr-bar">
+                  <p-progressBar [value]="row.winRate" [showValue]="false" styleClass="wr-progress" />
+                  <span>{{row.winRate | number:'1.0-1'}}%</span>
+                </div>
+              </td>
+              <td class="text-right" [class]="pnlClass(row.netPnL)">
+                {{formatPnL(row.netPnL)}}
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    }
+  }
+</div>

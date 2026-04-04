@@ -1,0 +1,60 @@
+
+@use 'theme' as *;
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: $text-muted;
+  text-decoration: none;
+  font-size: $size-base;
+  margin-bottom: 1.5rem;
+
+  &:hover { color: $text; }
+}
+
+.detail-layout { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
+.info-panel, .notes-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+.info-panel > div, .notes-card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.25rem;
+}
+
+.trade-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+.symbol-block { display: flex; align-items: center; gap: 0.75rem; }
+.symbol-text { font-size: $size-xl; font-weight: 700; }
+.pnl-block { font-size: $size-xl; font-weight: 700; }
+
+.pnl-pos, .info-value.pnl-pos { color: $success-mid; }
+.pnl-neg, .info-value.pnl-neg { color: $danger-mid; }
+
+.dir-badge { font-size: $size-sm; font-weight: 600; padding: 3px 10px; border-radius: 6px; }
+.dir-long  { color: $success; background: $success-dark-bg; }
+.dir-short { color: $danger;  background: $danger-dark-bg; }
+
+.info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.info-item { display: flex; flex-direction: column; gap: 2px; padding: 0.5rem; background: $bg-deeper; border-radius: 6px; }
+.info-item.highlight { border: 1px solid $accent-dark; background: $accent-bg; }
+.info-label { font-size: $size-xs; text-transform: uppercase; letter-spacing: 0.05em; color: $text-dim; }
+.info-value { font-size: $size-base; font-weight: 500; color: $text; }
+.info-value.mono { font-family: monospace; font-size: 0.8rem; }
+
+.tags-section {
+  padding-top: 1rem;
+  border-top: 1px solid $border;
+  margin-top: 1rem;
+}
+
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+
+.save-indicator {
+  font-size: $size-sm;
+  color: $accent;
+  opacity: 0;
+  transition: opacity 0.2s;
+
+  &.visible { opacity: 1; }
+}

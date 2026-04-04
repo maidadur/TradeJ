@@ -1,0 +1,402 @@
+<div class="day-view-page">
+
+  <!-- Page header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Day View</h1>
+      <div class="view-toggle">
+        <button class="toggle-btn" [class.active]="viewMode === 'day'" (click)="viewMode = 'day'">Day</button>
+        <button class="toggle-btn" [class.active]="viewMode === 'week'" (click)="viewMode = 'week'">Week</button>
+      </div>
+    </div>
+    <div class="header-controls">
+      <p-select [options]="yearOptions" [(ngModel)]="selectedYear" (ngModelChange)="onFilterChange()"
+        styleClass="filter-select" />
+      <p-select [options]="monthOptions" [(ngModel)]="selectedMonth" optionLabel="label" optionValue="value"
+        (ngModelChange)="onFilterChange()" placeholder="All months" styleClass="filter-select" />
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading()" class="loading-state">
+    <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>
+    <span>Loading trades…</span>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!loading() && days().length === 0" class="empty-state">
+    <i class="pi pi-calendar" style="font-size:3rem;color:#334155"></i>
+    <p>No closed trades found for this period.</p>
+  </div>
+
+  <!-- Main layout: list + calendar -->
+  <div *ngIf="!loading() && days().length > 0" class="content-layout">
+
+    <!-- Left: Day or Week list -->
+    <div class="day-list">
+
+      <!-- ===== DAY VIEW ===== -->
+      <ng-container *ngIf="viewMode === 'day'">
+        <div *ngFor="let day of days()" class="day-card" [id]="'day-' + day.date">
+
+          <!-- Day header -->
+          <div class="day-header" (click)="toggleDay(day.date)">
+            <button class="expand-btn">
+              <i class="pi" [class.pi-chevron-right]="!isDayExpanded(day.date)"
+                            [class.pi-chevron-down]="isDayExpanded(day.date)"></i>
+            </button>
+            <span class="day-label">{{ day.dayLabel }}</span>
+            <span class="trade-count">{{ day.stats.totalTrades }} trades</span>
+            <span class="day-pnl" [class.positive]="day.stats.netPnL >= 0" [class.negative]="day.stats.netPnL < 0">
+              Net P&amp;L {{ formatPnL(day.stats.netPnL) }}
+            </span>
+            <button class="note-btn" [class.note-btn--has-note]="hasNote(day.date)"
+              (click)="openNoteDialog(day, $event)">
+              <i class="pi" [class.pi-file]="!hasNote(day.date)" [class.pi-file-edit]="hasNote(day.date)"></i>
+              {{ hasNote(day.date) ? 'View note' : 'Add note' }}
+            </button>
+          </div>
+
+          <!-- Day body (expanded) -->
+          <div *ngIf="isDayExpanded(day.date)" class="day-body">
+
+            <!-- Stats + chart row -->
+            <div class="day-stats-row">
+              <!-- Stats grid -->
+              <div class="day-stats">
+                <div class="stat-item">
+                  <div class="stat-label">Total Trades</div>
+                  <div class="stat-value">{{ day.stats.totalTrades }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Gross P&amp;L</div>
+                  <div class="stat-value" [class.positive]="day.stats.grossPnL >= 0" [class.negative]="day.stats.grossPnL < 0">
+                    {{ formatPnL(day.stats.grossPnL) }}
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Winners / Losers</div>
+                  <div class="stat-value">
+                    <span class="positive">{{ day.stats.winners }}</span>
+                    <span style="color:#64748b"> / </span>
+                    <span class="negative">{{ day.stats.losers }}</span>
+                  </div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Commission</div>
+                  <div class="stat-value">{{ day.stats.commission === 0 ? '$0' : formatPnL(day.stats.commission) }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Win Rate</div>
+                  <div class="stat-value">{{ day.stats.winRate }}%</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Volume</div>
+                  <div class="stat-value">{{ day.stats.volume }}</div>
+                </div>
+                <div class="stat-item">
+                  <div class="stat-label">Profit Factor</div>
+                  <div class="stat-value"
+                    [class.positive]="day.stats.profitFactor >= 1"
+                    [class.negative]="day.stats.profitFactor < 1 && day.stats.profitFactor > 0">
+                    {{ day.stats.profitFactor }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Mini chart -->
+              <div class="day-chart" *ngIf="day.trades.length > 1">
+                <p-chart type="line" [data]="buildChartData(day)" [options]="chartOptions" height="120px" />
+              </div>
+            </div>
+
+            <!-- Trade table -->
+            <div class="trade-table-wrap">
+              <table class="trade-table">
+                <thead>
+                  <tr>
+                    <th>Open time</th>
+                    <th>Symbol</th>
+                    <th>Side</th>
+                    <th class="text-right">Net P&amp;L</th>
+                    <th class="text-right">Gross P&amp;L</th>
+                    <th class="text-right">Commission</th>
+                    <th class="text-right">Volume</th>
+                    <th class="text-right">Duration</th>
+                    <th>Tags</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let t of day.trades" class="trade-row" (click)="openTrade(t.id)">
+                    <td class="trade-time">{{ formatTime(t.entryTime) }}</td>
+                    <td>
+                      <span class="symbol-badge">{{ t.symbol }}</span>
+                    </td>
+                    <td>
+                      <span class="side-badge" [class.long]="t.direction === 'Long'" [class.short]="t.direction === 'Short'">
+                        {{ t.direction.toUpperCase() }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <span [class.positive]="t.netPnL >= 0" [class.negative]="t.netPnL < 0">
+                        {{ formatPnL(t.netPnL) }}
+                      </span>
+                    </td>
+                    <td class="text-right">
+                      <span [class.positive]="t.grossPnL >= 0" [class.negative]="t.grossPnL < 0">
+                        {{ formatPnL(t.grossPnL) }}
+                      </span>
+                    </td>
+                    <td class="text-right" style="color:#64748b">
+                      {{ t.commission !== 0 ? formatPnL(t.commission) : '—' }}
+                    </td>
+                    <td class="text-right" style="color:#94a3b8">{{ t.volume }}</td>
+                    <td class="text-right" style="color:#64748b">{{ formatDuration(t.durationMinutes) }}</td>
+                    <td>
+                      <span *ngIf="t.tags" class="tag-pill">{{ t.tags }}</span>
+                      <span *ngIf="!t.tags" style="color:#334155">—</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ===== WEEK VIEW ===== -->
+      <ng-container *ngIf="viewMode === 'week'">
+        <div *ngFor="let week of weeks()" class="week-card">
+
+          <!-- Week header -->
+          <div class="week-header" (click)="toggleWeek(week.weekNumber)">
+            <button class="expand-btn">
+              <i class="pi" [class.pi-chevron-right]="!isWeekExpanded(week.weekNumber)"
+                            [class.pi-chevron-down]="isWeekExpanded(week.weekNumber)"></i>
+            </button>
+            <span class="week-label">{{ week.weekLabel }}</span>
+            <span class="trade-count">{{ week.stats.totalTrades }} trades</span>
+            <span class="day-pnl" [class.positive]="week.stats.netPnL >= 0" [class.negative]="week.stats.netPnL < 0">
+              Net P&amp;L {{ formatPnL(week.stats.netPnL) }}
+            </span>
+          </div>
+
+          <!-- Week stats summary (always visible) -->
+          <div class="week-summary-stats">
+            <span class="stat-chip">Win rate <strong>{{ week.stats.winRate }}%</strong></span>
+            <span class="stat-chip">Profit factor <strong>{{ week.stats.profitFactor }}</strong></span>
+            <span class="stat-chip positive">{{ week.stats.winners }}W</span>
+            <span class="stat-chip negative">{{ week.stats.losers }}L</span>
+            <span class="stat-chip">Volume <strong>{{ week.stats.volume }}</strong></span>
+          </div>
+
+          <!-- Week body (expanded = show days) -->
+          <div *ngIf="isWeekExpanded(week.weekNumber)" class="week-body">
+            <div *ngFor="let day of week.days" class="week-day-card" [id]="'day-' + day.date">
+
+              <div class="day-header day-header--inner" (click)="toggleDay(day.date)">
+                <button class="expand-btn expand-btn--sm">
+                  <i class="pi" [class.pi-chevron-right]="!isDayExpanded(day.date)"
+                                [class.pi-chevron-down]="isDayExpanded(day.date)"></i>
+                </button>
+                <span class="day-label">{{ day.dayLabel }}</span>
+                <span class="trade-count">{{ day.stats.totalTrades }} trades</span>
+                <span class="day-pnl" [class.positive]="day.stats.netPnL >= 0" [class.negative]="day.stats.netPnL < 0">
+                  {{ formatPnL(day.stats.netPnL) }}
+                </span>
+                <button class="note-btn" [class.note-btn--has-note]="hasNote(day.date)"
+                  (click)="openNoteDialog(day, $event)">
+                  <i class="pi" [class.pi-file]="!hasNote(day.date)" [class.pi-file-edit]="hasNote(day.date)"></i>
+                  {{ hasNote(day.date) ? 'View note' : 'Add note' }}
+                </button>
+              </div>
+
+              <div *ngIf="isDayExpanded(day.date)" class="day-body">
+                <div class="day-stats-row">
+                  <div class="day-stats">
+                    <div class="stat-item">
+                      <div class="stat-label">Trades</div>
+                      <div class="stat-value">{{ day.stats.totalTrades }}</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Gross P&amp;L</div>
+                      <div class="stat-value" [class.positive]="day.stats.grossPnL >= 0" [class.negative]="day.stats.grossPnL < 0">
+                        {{ formatPnL(day.stats.grossPnL) }}
+                      </div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">W / L</div>
+                      <div class="stat-value">
+                        <span class="positive">{{ day.stats.winners }}</span>
+                        <span style="color:#64748b"> / </span>
+                        <span class="negative">{{ day.stats.losers }}</span>
+                      </div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Win Rate</div>
+                      <div class="stat-value">{{ day.stats.winRate }}%</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Profit Factor</div>
+                      <div class="stat-value">{{ day.stats.profitFactor }}</div>
+                    </div>
+                  </div>
+                  <div class="day-chart" *ngIf="day.trades.length > 1">
+                    <p-chart type="line" [data]="buildChartData(day)" [options]="chartOptions" height="100px" />
+                  </div>
+                </div>
+                <div class="trade-table-wrap">
+                  <table class="trade-table">
+                    <thead>
+                      <tr>
+                        <th>Open time</th>
+                        <th>Symbol</th>
+                        <th>Side</th>
+                        <th class="text-right">Net P&amp;L</th>
+                        <th class="text-right">Volume</th>
+                        <th class="text-right">Duration</th>
+                        <th>Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let t of day.trades" class="trade-row" (click)="openTrade(t.id)">
+                        <td class="trade-time">{{ formatTime(t.entryTime) }}</td>
+                        <td><span class="symbol-badge">{{ t.symbol }}</span></td>
+                        <td>
+                          <span class="side-badge" [class.long]="t.direction === 'Long'" [class.short]="t.direction === 'Short'">
+                            {{ t.direction.toUpperCase() }}
+                          </span>
+                        </td>
+                        <td class="text-right">
+                          <span [class.positive]="t.netPnL >= 0" [class.negative]="t.netPnL < 0">
+                            {{ formatPnL(t.netPnL) }}
+                          </span>
+                        </td>
+                        <td class="text-right" style="color:#94a3b8">{{ t.volume }}</td>
+                        <td class="text-right" style="color:#64748b">{{ formatDuration(t.durationMinutes) }}</td>
+                        <td>
+                          <span *ngIf="t.tags" class="tag-pill">{{ t.tags }}</span>
+                          <span *ngIf="!t.tags" style="color:#334155">—</span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Day notes (week view) -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+    </div>
+
+    <!-- Right: Mini calendar -->
+    <div class="calendar-panel">
+      <div class="cal-nav">
+        <button class="cal-nav-btn" (click)="prevCalMonth()"><i class="pi pi-chevron-left"></i></button>
+        <span class="cal-month-label">{{ calMonthLabel() }}</span>
+        <button class="cal-nav-btn" (click)="nextCalMonth()"><i class="pi pi-chevron-right"></i></button>
+      </div>
+      <div class="cal-dow-row">
+        <span *ngFor="let d of ['Su','Mo','Tu','We','Th','Fr','Sa']" class="cal-dow">{{ d }}</span>
+      </div>
+      <div class="cal-grid">
+        <ng-container *ngFor="let cell of calendarDays()">
+          <div *ngIf="!cell" class="cal-cell cal-cell--empty"></div>
+          <div *ngIf="cell" class="cal-cell"
+            [class.cal-cell--win]="cell.stats && cell.stats.stats.netPnL > 0"
+            [class.cal-cell--loss]="cell.stats && cell.stats.stats.netPnL < 0"
+            [class.cal-cell--has-data]="cell.stats"
+            (click)="cell.stats && scrollToDay(cell.date)">
+            <span class="cal-day-num">{{ cell.day }}</span>
+            <span *ngIf="cell.stats" class="cal-day-pnl"
+              [class.positive]="cell.stats.stats.netPnL > 0"
+              [class.negative]="cell.stats.stats.netPnL < 0">
+              {{ cell.stats.stats.netPnL > 0 ? '+' : '' }}{{ cell.stats.stats.netPnL.toFixed(0) }}
+            </span>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Note Dialog ===== -->
+  <p-dialog
+    [header]="noteDialog().day?.dayLabel ?? ''"
+    [visible]="noteDialog().visible"
+    (visibleChange)="closeNoteDialog()"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{'width':'860px','max-width':'96vw'}"
+    styleClass="note-dialog">
+
+    <ng-container *ngIf="noteDialog().day as day">
+      <!-- Stats + chart row -->
+      <div class="note-dialog-stats-row">
+        <div class="note-dialog-chart" *ngIf="day.trades.length > 1">
+          <p-chart type="line" [data]="buildChartData(day)" [options]="chartOptions" height="110px" />
+        </div>
+        <div class="note-dialog-stats">
+          <div class="ndstat">
+            <div class="ndstat-label">Total Trades</div>
+            <div class="ndstat-value">{{ day.stats.totalTrades }}</div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Gross P&amp;L</div>
+            <div class="ndstat-value" [class.positive]="day.stats.grossPnL >= 0" [class.negative]="day.stats.grossPnL < 0">{{ formatPnL(day.stats.grossPnL) }}</div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Winners / Losers</div>
+            <div class="ndstat-value">
+              <span class="positive">{{ day.stats.winners }}</span>
+              <span style="color:#475569"> / </span>
+              <span class="negative">{{ day.stats.losers }}</span>
+            </div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Commissions</div>
+            <div class="ndstat-value">{{ day.stats.commission === 0 ? '$0' : formatPnL(day.stats.commission) }}</div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Win Rate</div>
+            <div class="ndstat-value">{{ day.stats.winRate }}%</div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Volume</div>
+            <div class="ndstat-value">{{ day.stats.volume }}</div>
+          </div>
+          <div class="ndstat">
+            <div class="ndstat-label">Profit Factor</div>
+            <div class="ndstat-value"
+              [class.positive]="day.stats.profitFactor >= 1"
+              [class.negative]="day.stats.profitFactor < 1 && day.stats.profitFactor > 0">
+              {{ day.stats.profitFactor }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Saving indicator -->
+      <div class="note-dialog-saving" *ngIf="isNoteSaving(day.date)">
+        <i class="pi pi-spin pi-spinner"></i> Saving…
+      </div>
+
+      <!-- Editor -->
+      <p-editor
+        [ngModel]="noteDialogContent"
+        (ngModelChange)="onNoteChange(day.date, $event); noteDialogContent = $event"
+        [style]="{'min-height':'220px'}"
+      />
+    </ng-container>
+
+    <ng-template pTemplate="footer">
+      <button class="dialog-close-btn" (click)="closeNoteDialog()">
+        <i class="pi pi-check"></i> Done
+      </button>
+    </ng-template>
+  </p-dialog>
+
+</div>

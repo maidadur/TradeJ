@@ -1,0 +1,70 @@
+@use 'theme' as *;
+
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
+.page-title { font-size: $size-xl; font-weight: 700; margin: 0; }
+
+.mono { font-family: monospace; font-size: 0.85rem; }
+.text-center { text-align: center; }
+
+.broker-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-sm;
+  background: $border;
+  color: $text-secondary;
+  text-transform: uppercase;
+}
+
+[data-broker="mt5"]     { background: $mt5-bg;      color: $mt5-color; }
+[data-broker="ctrader"] { background: $success-bg;  color: $success; }
+[data-broker="bybit"]   { background: $danger-bg;   color: $danger; }
+
+.live-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: $success;
+  background: $success-dark-bg;
+  border: 1px solid $success-border;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.not-configured { color: $text-dimmer; font-size: 0.8rem; }
+
+.action-buttons { display: flex; gap: 4px; }
+
+.empty-state { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; padding: 2.5rem; color: $text-dim; }
+
+.dialog-form { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.25rem 0; }
+.form-group { display: flex; flex-direction: column; gap: 4px; }
+.form-label { font-size: $size-sm; text-transform: uppercase; letter-spacing: 0.05em; color: $text-muted; }
+
+.meta-api-section {
+  margin-top: 0.5rem;
+  border: 1px solid $accent-dark;
+  border-radius: $radius-md;
+  padding: 1rem;
+  background: $bg-deepest;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.meta-api-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: $accent-light;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+.meta-api-sub { font-weight: 400; color: $text-dim; }
+.meta-api-hint {
+  font-size: 0.72rem;
+  color: $text-dim;
+  line-height: 1.5;
+
+  strong { color: $accent; }
+}
+.token-set { font-size: $size-xs; color: $success-mid; margin-left: 0.4rem; text-transform: none; letter-spacing: 0; }
+
+.w-full { width: 100%; }

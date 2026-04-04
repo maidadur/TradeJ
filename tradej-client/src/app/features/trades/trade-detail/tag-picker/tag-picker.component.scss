@@ -1,0 +1,351 @@
+@use 'theme' as *;
+
+.tag-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.tp-loading {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem;
+  color: $text-dim;
+  font-size: $size-md;
+}
+
+.tp-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: $text-dim;
+  font-size: $size-base;
+}
+
+.btn-add-first {
+  background: none;
+  border: 1px dashed $border;
+  border-radius: $radius-md;
+  color: $accent-light;
+  padding: 0.4rem 1rem;
+  cursor: pointer;
+  font-size: $size-sm;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: $accent;
+    background: $accent-bg;
+  }
+}
+
+/* Category section */
+.cat-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.cat-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cat-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cat-name {
+  flex: 1;
+  font-size: $size-sm;
+  font-weight: 600;
+  color: $text;
+}
+
+.cat-menu-wrap {
+  position: relative;
+}
+
+.cat-menu-btn {
+  background: none;
+  border: none;
+  color: $text-dim;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+
+  &:hover {
+    color: $text;
+    background: $bg-hover;
+  }
+}
+
+.cat-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  z-index: 100;
+  min-width: 120px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  button {
+    display: block;
+    width: 100%;
+    background: none;
+    border: none;
+    padding: 0.5rem 0.75rem;
+    color: $text;
+    font-size: $size-sm;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover { background: $bg-hover; }
+    &.danger { color: $danger; }
+    &.danger:hover { background: rgba($danger, 0.1); }
+  }
+}
+
+/* Tag input wrap */
+.tag-input-wrap {
+  position: relative;
+}
+
+.chips-and-input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  min-height: 38px;
+  padding: 4px 8px;
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  cursor: text;
+  transition: border-color 0.15s;
+
+  &:focus-within {
+    border-color: $accent;
+  }
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: $accent-bg;
+  color: $accent-light;
+  border-radius: 10px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.chip-remove {
+  background: none;
+  border: none;
+  color: $accent-light;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.9rem;
+  line-height: 1;
+  opacity: 0.65;
+
+  &:hover { opacity: 1; }
+}
+
+.tag-input {
+  flex: 1;
+  min-width: 80px;
+  background: none;
+  border: none;
+  outline: none;
+  color: $text;
+  font-size: $size-sm;
+  padding: 2px 0;
+
+  &::placeholder { color: $text-dim; }
+}
+
+/* Dropdown */
+.tag-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  z-index: 50;
+  max-height: 220px;
+  overflow-y: auto;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.tag-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.75rem;
+  font-size: $size-sm;
+  color: $text;
+  cursor: pointer;
+  transition: background 0.1s;
+
+  &:hover { background: $bg-hover; }
+
+  &--create {
+    color: $accent-light;
+    gap: 0.4rem;
+
+    i { font-size: 0.75rem; }
+  }
+
+  &--empty {
+    color: $text-dim;
+    font-style: italic;
+    cursor: default;
+
+    &:hover { background: transparent; }
+  }
+}
+
+.opt-del {
+  background: none;
+  border: none;
+  color: $text-dim;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0 2px;
+  opacity: 0;
+  line-height: 1;
+  transition: color 0.1s;
+
+  .tag-option:hover & { opacity: 1; }
+  &:hover { color: $danger; }
+}
+
+/* Add category link */
+.btn-add-cat {
+  background: none;
+  border: none;
+  color: $text-dim;
+  font-size: $size-sm;
+  cursor: pointer;
+  padding: 0.2rem 0;
+  text-align: left;
+  transition: color 0.15s;
+
+  &:hover { color: $accent-light; }
+}
+
+/* Overlay dialogs */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  padding: 1.5rem;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  h4 {
+    margin: 0;
+    font-size: $size-md;
+    color: $text;
+  }
+}
+
+.dialog-input {
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.5rem 0.75rem;
+  color: $text;
+  font-size: $size-base;
+  width: 100%;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+
+  &:focus { border-color: $accent; }
+}
+
+.color-swatches {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.15s;
+
+  &.active {
+    border-color: $text;
+    transform: scale(1.2);
+  }
+
+  &:hover:not(.active) { transform: scale(1.1); }
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.btn-cancel {
+  background: none;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.4rem 1rem;
+  color: $text-muted;
+  cursor: pointer;
+  font-size: $size-sm;
+  transition: background 0.15s;
+
+  &:hover { background: $bg-hover; }
+}
+
+.btn-primary {
+  background: $accent;
+  border: none;
+  border-radius: $radius-md;
+  padding: 0.4rem 1rem;
+  color: #fff;
+  cursor: pointer;
+  font-size: $size-sm;
+  font-weight: 500;
+  transition: background 0.15s;
+
+  &:hover { background: $accent-mid; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}

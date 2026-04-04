@@ -1,34 +1,68 @@
+using Microsoft.EntityFrameworkCore;
+using TradeJ.Data;
+using TradeJ.Services;
 
-namespace TradeJ
+namespace TradeJ;
+
+public class Program
 {
-	public class Program
-	{
-		public static void Main(string[] args)
-		{
-			var builder = WebApplication.CreateBuilder(args);
+    public static async Task Main(string[] args)
+    {
+        var builder = WebApplication.CreateBuilder(args);
 
-			// Add services to the container.
+        // EF Core – SQLite
+        var dbPath = builder.Configuration.GetConnectionString("Default")
+            ?? "Data Source=tradej.db";
+        builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlite(dbPath));
 
-			builder.Services.AddControllers();
-			// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-			builder.Services.AddOpenApi();
+        // Services
+        builder.Services.AddScoped<DashboardService>();
+        builder.Services.AddScoped<MT5LiveImportService>();
+        builder.Services.AddScoped<MT5BridgeImportService>();
+        builder.Services.AddHttpClient();
 
-			var app = builder.Build();
+        // Controllers
+        builder.Services.AddControllers();
 
-			// Configure the HTTP request pipeline.
-			if (app.Environment.IsDevelopment())
-			{
-				app.MapOpenApi();
-			}
+        // OpenAPI / Swagger
+        builder.Services.AddOpenApi();
 
-			app.UseHttpsRedirection();
+        // CORS – allow Angular dev server
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Angular", policy =>
+                policy.WithOrigins(
+                        "http://localhost:4200",
+                        "https://localhost:4200")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod());
+        });
 
-			app.UseAuthorization();
+        var app = builder.Build();
 
+        // Auto-apply migrations on startup
+        using (var scope = app.Services.CreateScope())
+        {
+            var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            await ctx.Database.MigrateAsync();
+        }
 
-			app.MapControllers();
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapOpenApi();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/openapi/v1.json", "TradeJ API v1");
+                c.RoutePrefix = "swagger";
+            });
+        }
 
-			app.Run();
-		}
-	}
+        app.UseCors("Angular");
+        app.UseHttpsRedirection();
+        app.UseStaticFiles();   // serves wwwroot/screenshots
+        app.UseAuthorization();
+        app.MapControllers();
+
+        await app.RunAsync();
+    }
 }
