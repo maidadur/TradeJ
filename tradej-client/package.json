@@ -22,6 +22,7 @@
     "@primeng/themes": "^21.0.4",
     "@types/quill": "^2.0.14",
     "chart.js": "^4.5.1",
+    "lightweight-charts": "^5.1.0",
     "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
     "primeng": "^21.1.5",

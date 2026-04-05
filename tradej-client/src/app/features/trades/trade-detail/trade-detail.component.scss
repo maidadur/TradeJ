@@ -16,6 +16,13 @@
 .detail-layout { display: grid; grid-template-columns: 380px 1fr; gap: 1.5rem; }
 .info-panel, .notes-panel { display: flex; flex-direction: column; gap: 1rem; }
 
+.chart-card {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
 .info-panel > div, .notes-card {
   background: $bg-surface;
   border: 1px solid $border;

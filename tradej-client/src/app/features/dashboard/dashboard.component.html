@@ -1,8 +1,18 @@
 <div class="dashboard-page">
+  <p-toast position="top-right" />
+
   <!-- Header -->
   <div class="page-header">
     <h1 class="page-title">Dashboard</h1>
     <div class="header-controls">
+      <p-button
+        icon="pi pi-sync"
+        label="Resync All"
+        severity="secondary"
+        size="small"
+        [loading]="syncing()"
+        (onClick)="resyncAll()"
+      />
       <p-select
         [options]="yearOptions"
         [(ngModel)]="selectedYear"

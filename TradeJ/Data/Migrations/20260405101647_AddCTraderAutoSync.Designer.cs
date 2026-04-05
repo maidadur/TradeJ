@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TradeJ.Data;
 
@@ -10,9 +11,11 @@ using TradeJ.Data;
 namespace TradeJ.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405101647_AddCTraderAutoSync")]
+    partial class AddCTraderAutoSync
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -76,20 +79,6 @@ namespace TradeJ.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Accounts");
-                });
-
-            modelBuilder.Entity("TradeJ.Models.AppSetting", b =>
-                {
-                    b.Property<string>("Key")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Value")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Key");
-
-                    b.ToTable("AppSettings");
                 });
 
             modelBuilder.Entity("TradeJ.Models.DayNote", b =>

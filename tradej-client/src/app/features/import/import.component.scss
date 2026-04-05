@@ -31,6 +31,18 @@
 .live-title { font-size: $size-md; font-weight: 700; color: $accent-light; margin: 0; }
 .live-sub { font-size: $size-sm; color: $text-dim; }
 
+.ct-connect-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ct-connect-hint {
+  font-size: $size-sm;
+  color: $text-dim;
+}
+
 .live-grid { display: grid; grid-template-columns: 380px 1fr; gap: 1.25rem; }
 .live-card {
   display: flex;
@@ -174,3 +186,28 @@
 .how-to-item { margin-bottom: 1rem; }
 .how-to-item strong { color: $accent-light; font-size: $size-base; }
 .how-to-item p { color: $text-muted; font-size: 0.8rem; margin: 4px 0 0; line-height: 1.5; }
+
+/* ── Auto-Sync Settings ── */
+.auto-sync-section .live-dot { animation: none; background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
+.sync-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.sync-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: $bg-deeper;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  padding: 0.9rem 1.1rem;
+  gap: 1rem;
+}
+.sync-toggle-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.sync-toggle-label { font-size: $size-base; font-weight: 600; color: #e2e8f0; }
+.sync-toggle-hint { font-size: $size-sm; color: $text-dim; }

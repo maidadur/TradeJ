@@ -52,7 +52,7 @@ public class DayViewController(AppDbContext db) : ControllerBase
             {
                 var date      = g.Key;
                 var dateOnly  = DateOnly.FromDateTime(date);
-                var tradeList = g.OrderBy(t => t.EntryTime).ToList();
+                var tradeList = g.OrderByDescending(t => t.EntryTime).ToList();
                 var wins      = tradeList.Count(t => t.NetPnL > 0);
                 var losses    = tradeList.Count(t => t.NetPnL < 0);
                 var grossPnL  = tradeList.Sum(t => t.GrossPnL);

@@ -6,20 +6,29 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { TagModule } from 'primeng/tag';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { ButtonModule } from 'primeng/button';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { AccountService } from '../../core/services/account.service';
 import { Dashboard, DashboardSummary, MonthlyStats, DailyStats } from '../../core/models/dashboard.model';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule, SelectModule, TableModule, TagModule, ProgressBarModule],
+  imports: [CommonModule, FormsModule, ChartModule, SelectModule, TableModule, TagModule, ProgressBarModule, ButtonModule, ToastModule],
+  providers: [MessageService],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
 })
 export class DashboardComponent implements OnInit {
   private dashboardService = inject(DashboardService);
   private accountService = inject(AccountService);
+  private http = inject(HttpClient);
+  private messageService = inject(MessageService);
+
+  syncing = signal(false);
 
   dashboard = signal<Dashboard | null>(null);
   loading = signal(false);
@@ -39,7 +48,7 @@ export class DashboardComponent implements OnInit {
       return dt.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: '2-digit' });
     });
     const lastVal = values[values.length - 1] ?? 0;
-    const color   = lastVal >= 0 ? '#6366f1' : '#ef4444';
+    const color   = lastVal >= 0 ? '#6366f1' : '#F06363';
     const bgColor = lastVal >= 0 ? 'rgba(99,102,241,0.15)' : 'rgba(239,68,68,0.15)';
     return {
       labels,
@@ -68,7 +77,7 @@ export class DashboardComponent implements OnInit {
           backgroundColor: 'rgba(99,102,241,0.08)', borderWidth: 2, fill: false,
           tension: 0.3, pointRadius: 3, pointHoverRadius: 5 },
         { label: 'Initial Balance', data: Array(labels.length).fill(init),
-          borderColor: '#ef4444', backgroundColor: 'transparent',
+          borderColor: '#F06363', backgroundColor: 'transparent',
           borderWidth: 2, borderDash: [4, 4], fill: false,
           pointRadius: 0, tension: 0 }
       ]
@@ -156,7 +165,7 @@ export class DashboardComponent implements OnInit {
   monthlyChartData = computed(() => {
     const d = this.dashboard();
     if (!d) return {};
-    const colors = d.monthlyStats.map(m => m.netPnL >= 0 ? '#22c55e' : '#ef4444');
+    const colors = d.monthlyStats.map(m => m.netPnL >= 0 ? '#2FA87A' : '#F06363');
     return {
       labels: d.monthlyStats.map(m => m.monthName.slice(0, 3)),
       datasets: [{
@@ -171,7 +180,7 @@ export class DashboardComponent implements OnInit {
     const d = this.dashboard();
     if (!d) return {};
     const top = d.symbolStats.slice(0, 10);
-    const colors = top.map(s => s.netPnL >= 0 ? '#22c55e' : '#ef4444');
+    const colors = top.map(s => s.netPnL >= 0 ? '#2FA87A' : '#F06363');
     return {
       labels: top.map(s => s.symbol),
       datasets: [{
@@ -302,5 +311,21 @@ export class DashboardComponent implements OnInit {
     if (value > 0) return 'pnl-pos';
     if (value < 0) return 'pnl-neg';
     return 'pnl-zero';
+  }
+
+  resyncAll(): void {
+    if (this.syncing()) return;
+    this.syncing.set(true);
+    this.http.post<void>('/api/sync/all', null).subscribe({
+      next: () => {
+        this.syncing.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: 'All accounts have been resynced.', life: 3000 });
+        if (this.accountId()) this.load();
+      },
+      error: () => {
+        this.syncing.set(false);
+        this.messageService.add({ severity: 'error', summary: 'Sync failed', detail: 'Could not reach the sync service. Check that the MT5 bridge is running.', life: 5000 });
+      }
+    });
   }
 }

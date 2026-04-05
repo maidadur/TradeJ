@@ -97,8 +97,19 @@
         </div>
       </div>
 
-      <!-- Right: Notes -->
+      <!-- Right: Chart + Notes -->
       <div class="notes-panel">
+        <!-- TradingView Chart -->
+        <div class="chart-card">
+          <app-tradingview-chart
+            [symbol]="trade()!.symbol"
+            [entryTime]="trade()!.entryTime"
+            [exitTime]="trade()!.exitTime"
+            [entryPrice]="trade()!.entryPrice"
+            [exitPrice]="trade()!.exitPrice"
+            [direction]="trade()!.direction"
+          />
+        </div>
         <!-- Rich Text Notes -->
         <div class="notes-card">
           <div class="section-header">

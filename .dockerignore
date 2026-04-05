@@ -23,6 +23,12 @@
 **/values.dev.yaml
 LICENSE
 README.md
+# SQLite database – never bake the DB into an image
+**/*.db
+**/*.db-shm
+**/*.db-wal
+# data folder (mounted as volume)
+data/
 !**/.gitignore
 !.git/HEAD
 !.git/config

@@ -20,5 +20,10 @@ public class Account
     public string? MetaApiToken { get; set; }
     public string MetaApiRegion { get; set; } = "london";
 
+    // cTrader auto-sync — stored after first OAuth login
+    public long? CTraderCtidAccountId { get; set; }   // ctidTraderAccountId from cTrader API
+    public bool CTraderIsLive { get; set; } = true;
+    public string? CTraderRefreshToken { get; set; }  // used to get a new access token silently
+
     public ICollection<Trade> Trades { get; set; } = [];
 }

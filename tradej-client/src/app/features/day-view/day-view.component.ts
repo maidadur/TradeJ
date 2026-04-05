@@ -221,7 +221,7 @@ export class DayViewComponent implements OnInit {
     });
     const labels = day.trades.map((_: DayTradeItem, i: number) => `#${i + 1}`);
     const lastVal = values[values.length - 1] ?? 0;
-    const color = lastVal >= 0 ? '#22c55e' : '#ef4444';
+    const color = lastVal >= 0 ? '#2FA87A' : '#F06363';
     const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';
     return {
       labels,

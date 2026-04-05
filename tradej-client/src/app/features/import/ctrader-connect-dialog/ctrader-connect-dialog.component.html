@@ -1,0 +1,155 @@
+<p-dialog
+  [(visible)]="visible"
+  (onHide)="close()"
+  [modal]="true"
+  [draggable]="false"
+  [resizable]="false"
+  [style]="{ width: '720px', maxWidth: '95vw' }"
+  header="Connect cTrader Account"
+>
+
+  <!-- ── Error banner ─────────────────────────────── -->
+  @if (errorMsg()) {
+    <div class="ct-error">
+      <i class="pi pi-exclamation-triangle"></i>
+      {{ errorMsg() }}
+    </div>
+  }
+
+  <!-- ── STEP: idle / connecting ────────────────── -->
+  @if (step() === 'idle' || step() === 'connecting') {
+    <div class="ct-intro">
+      <div class="ct-logo-row">
+        <span class="ct-logo-icon">&#9632;</span>
+        <span class="ct-logo-label">cTrader Open API</span>
+      </div>
+      <p class="ct-desc">
+        Sign in with your cTrader account to fetch your trading history directly.
+        A popup will open where you authorise this app.
+      </p>
+      <div class="ct-prereq">
+        <strong>Prerequisites</strong>
+        <ol>
+          <li>Create a free app at
+            <a href="https://connect.spotware.com" target="_blank" rel="noopener">connect.spotware.com</a>
+          </li>
+          <li>Set the Redirect URI to <code>http://localhost:4200/ctrader-callback</code></li>
+          <li>Paste the <strong>Client ID</strong> and <strong>Client Secret</strong>
+              into <code>appsettings.json</code> under <code>CTrader</code></li>
+        </ol>
+      </div>
+      <p-button
+        label="Connect to cTrader"
+        icon="pi pi-sign-in"
+        [loading]="step() === 'connecting'"
+        (onClick)="connectOAuth()"
+        [style]="{ width: '100%', marginTop: '1rem' }"
+      />
+    </div>
+  }
+
+  <!-- ── STEP: selecting accounts ───────────────── -->
+  @if (step() === 'selecting' || step() === 'done') {
+    <div class="ct-account-list">
+      <p class="ct-hint">
+        Select the cTrader accounts you want to import and map each one to a TradeJ account.
+      </p>
+
+      @for (row of accountRows(); track row.ctraderAccount.ctidTraderAccountId) {
+        <div class="ct-row" [class.ct-row--done]="row.result !== null">
+
+          <!-- Checkbox + account label -->
+          <div class="ct-row-header">
+            <p-checkbox [(ngModel)]="row.selected" [binary]="true" />
+            <div class="ct-row-id">
+              <span class="ct-row-login">{{ row.ctraderAccount.traderLogin }}</span>
+              <span class="ct-row-broker">{{ row.ctraderAccount.brokerName }}</span>
+              <span class="ct-badge" [class.ct-badge--live]="row.ctraderAccount.isLive">
+                {{ formatAccountType(row.ctraderAccount) }}
+              </span>
+            </div>
+            @if (row.result) {
+              <div class="ct-inline-result">
+                <span class="pnl-pos">{{ row.result.imported }} imported</span>
+                &nbsp;·&nbsp;
+                <span style="color:#94a3b8">{{ row.result.skipped }} skipped</span>
+                @if (row.result.errors > 0) {
+                  &nbsp;·&nbsp;<span class="pnl-neg">{{ row.result.errors }} errors</span>
+                }
+              </div>
+            }
+            @if (row.importing) {
+              <span class="ct-spinner"><i class="pi pi-spin pi-spinner"></i></span>
+            }
+          </div>
+
+          @if (row.selected) {
+            <div class="ct-row-body">
+              <!-- Map to TradeJ account -->
+              <div class="ct-field">
+                <label>TradeJ Account</label>
+                <p-select
+                  [options]="tradeJAccounts()"
+                  [(ngModel)]="row.tradeJAccount"
+                  [optionLabel]="'name'"
+                  placeholder="Select account…"
+                  [style]="{ width: '100%' }"
+                />
+              </div>
+
+              <!-- Date range -->
+              <div class="ct-date-row">
+                <div class="ct-field">
+                  <label>From</label>
+                  <p-datepicker [(ngModel)]="row.dateFrom" dateFormat="yy-mm-dd"
+                    [style]="{ width: '100%' }" />
+                </div>
+                <div class="ct-field">
+                  <label>To</label>
+                  <p-datepicker [(ngModel)]="row.dateTo" dateFormat="yy-mm-dd"
+                    [style]="{ width: '100%' }" />
+                </div>
+              </div>
+
+              @if (row.error) {
+                <div class="ct-row-error"><i class="pi pi-times-circle"></i> {{ row.error }}</div>
+              }
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ── Footer ─────────────────────────────────── -->
+  <ng-template pTemplate="footer">
+    @if (step() === 'selecting') {
+      <p-button
+        label="Cancel"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="close()"
+      />
+      <p-button
+        label="Import Selected"
+        icon="pi pi-download"
+        [disabled]="!canImport()"
+        [loading]="importing()"
+        (onClick)="doImport()"
+      />
+    }
+    @if (step() === 'done') {
+      <p-button label="Close" (onClick)="close()" />
+      <p-button
+        label="Import Again"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="step.set('selecting')"
+      />
+    }
+    @if (step() === 'idle' || step() === 'connecting') {
+      <p-button label="Cancel" severity="secondary" [outlined]="true" (onClick)="close()" />
+    }
+  </ng-template>
+
+</p-dialog>

@@ -44,5 +44,10 @@ export const routes: Routes = [
       }
     ]
   },
+  {
+    path: 'ctrader-callback',
+    loadComponent: () => import('./features/ctrader-callback/ctrader-callback.component')
+      .then(m => m.CTraderCallbackComponent)
+  },
   { path: '**', redirectTo: 'dashboard' }
 ];

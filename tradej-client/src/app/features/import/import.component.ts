@@ -9,9 +9,12 @@ import { MessageModule } from 'primeng/message';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { DatePickerModule } from 'primeng/datepicker';
 import { InputTextModule } from 'primeng/inputtext';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 import { ImportService, ImportResult } from '../../core/services/import.service';
 import { AccountService } from '../../core/services/account.service';
 import { Account } from '../../core/models/account.model';
+import { CTraderConnectDialogComponent } from './ctrader-connect-dialog/ctrader-connect-dialog.component';
+import { SettingsService, SETTING_MT5_SYNC, SETTING_CTRADER_SYNC } from '../../core/services/settings.service';
 
 interface BrokerOption {
   label: string;
@@ -25,13 +28,21 @@ interface BrokerOption {
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, ButtonModule, SelectModule,
             FileUploadModule, MessageModule, ProgressBarModule, DatePickerModule,
-            InputTextModule],
+            InputTextModule, ToggleSwitchModule, CTraderConnectDialogComponent],
   templateUrl: './import.component.html',
   styleUrl: './import.component.scss'
 })
 export class ImportComponent {
   private importService = inject(ImportService);
   private accountService = inject(AccountService);
+  private settingsService = inject(SettingsService);
+
+  // Auto-sync toggle state
+  mt5SyncEnabled    = signal(true);
+  ctraderSyncEnabled = signal(true);
+
+  // cTrader connect dialog
+  showCTraderDialog = signal(false);
 
   // CSV import state
   accounts = signal<Account[]>([]);
@@ -82,6 +93,19 @@ export class ImportComponent {
       const sync = this.mt5SyncAccounts();
       if (sync.length > 0 && !this.syncAccount) this.syncAccount = sync[0];
     });
+
+    this.settingsService.getAll().subscribe(s => {
+      this.mt5SyncEnabled.set(s[SETTING_MT5_SYNC] !== 'false');
+      this.ctraderSyncEnabled.set(s[SETTING_CTRADER_SYNC] !== 'false');
+    });
+  }
+
+  onMt5SyncToggle(enabled: boolean): void {
+    this.settingsService.update(SETTING_MT5_SYNC, enabled).subscribe();
+  }
+
+  onCTraderSyncToggle(enabled: boolean): void {
+    this.settingsService.update(SETTING_CTRADER_SYNC, enabled).subscribe();
   }
 
   canImport(): boolean {

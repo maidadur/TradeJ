@@ -3,6 +3,29 @@
     <h1 class="page-title">Import Trades</h1>
   </div>
 
+  <!-- ── cTrader Live Import ──────────────────────────────────── -->
+  <div class="live-section">
+    <div class="live-section-header">
+      <span class="live-dot" style="background:#6366f1"></span>
+      <h2 class="live-title">cTrader Live Import</h2>
+      <span class="live-sub">Connect your cTrader account and import closed positions directly</span>
+    </div>
+    <div class="ct-connect-row">
+      <p-button
+        label="Connect cTrader Account"
+        icon="pi pi-sign-in"
+        severity="secondary"
+        (onClick)="showCTraderDialog.set(true)"
+      />
+      <span class="ct-connect-hint">A popup will open for secure cTrader authorisation</span>
+    </div>
+  </div>
+
+  <app-ctrader-connect-dialog
+    [visible]="showCTraderDialog()"
+    (visibleChange)="showCTraderDialog.set($event)"
+  />
+
   <!-- ── MT5 Live Import ─────────────────────────────────────── -->
   @if (mt5LiveAccounts().length > 0) {
     <div class="live-section">
@@ -50,7 +73,7 @@
             <div class="result-card" [class.has-errors]="liveResult()!.errors > 0">
               <div class="result-header">
                 <i class="pi pi-check-circle" style="font-size:1.5rem"
-                  [style.color]="liveResult()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+                  [style.color]="liveResult()!.errors > 0 ? '#f59e0b' : '#2FA87A'"></i>
                 <strong>Import Complete</strong>
               </div>
               <div class="result-stats">
@@ -146,7 +169,7 @@
             <div class="result-card" [class.has-errors]="syncResult()!.errors > 0">
               <div class="result-header">
                 <i class="pi pi-check-circle" style="font-size:1.5rem"
-                  [style.color]="syncResult()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+                  [style.color]="syncResult()!.errors > 0 ? '#f59e0b' : '#2FA87A'"></i>
                 <strong>Sync Complete</strong>
               </div>
               <div class="result-stats">
@@ -245,7 +268,7 @@
           (drop)="onDrop($event)"
         >
           @if (selectedFile()) {
-            <i class="pi pi-file-excel" style="font-size:2rem;color:#22c55e"></i>
+            <i class="pi pi-file-excel" style="font-size:2rem;color:#2FA87A"></i>
             <span>{{selectedFile()!.name}}</span>
             <span style="font-size:0.75rem;color:#64748b">{{formatSize(selectedFile()!.size)}}</span>
           } @else {
@@ -273,7 +296,7 @@
       @if (result()) {
         <div class="result-card" [class.has-errors]="result()!.errors > 0">
           <div class="result-header">
-            <i class="pi pi-check-circle" style="font-size:2rem" [style.color]="result()!.errors > 0 ? '#f59e0b' : '#22c55e'"></i>
+            <i class="pi pi-check-circle" style="font-size:2rem" [style.color]="result()!.errors > 0 ? '#f59e0b' : '#2FA87A'"></i>
             <h3>Import Complete</h3>
           </div>
           <div class="result-stats">
@@ -324,4 +347,36 @@
       }
     </div>
   </div>
+
+  <!-- ── Auto-Sync Settings ──────────────────────────────────── -->
+  <div class="live-section auto-sync-section">
+    <div class="live-section-header">
+      <span class="live-dot" style="background:#f59e0b"></span>
+      <h2 class="live-title">Auto-Sync Settings</h2>
+      <span class="live-sub">Background sync runs every 5 minutes for all linked accounts</span>
+    </div>
+    <div class="sync-toggles">
+      <div class="sync-toggle-row">
+        <div class="sync-toggle-info">
+          <span class="sync-toggle-label">MT5 Auto-Sync</span>
+          <span class="sync-toggle-hint">Automatically syncs all MT5 bridge accounts every 5 minutes</span>
+        </div>
+        <p-toggleswitch
+          [ngModel]="mt5SyncEnabled()"
+          (ngModelChange)="mt5SyncEnabled.set($event); onMt5SyncToggle($event)"
+        />
+      </div>
+      <div class="sync-toggle-row">
+        <div class="sync-toggle-info">
+          <span class="sync-toggle-label">cTrader Auto-Sync</span>
+          <span class="sync-toggle-hint">Automatically syncs all linked cTrader accounts every 5 minutes</span>
+        </div>
+        <p-toggleswitch
+          [ngModel]="ctraderSyncEnabled()"
+          (ngModelChange)="ctraderSyncEnabled.set($event); onCTraderSyncToggle($event)"
+        />
+      </div>
+    </div>
+  </div>
+
 </div>
