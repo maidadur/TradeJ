@@ -55,14 +55,14 @@ export class ImportComponent {
   // Live import state (MetaApi)
   liveAccount: Account | null = null;
   liveDateFrom: Date = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d; })();
-  liveDateTo: Date = new Date();
+  liveDateTo: Date = (() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; })();
   importingLive = signal(false);
   liveResult = signal<ImportResult | null>(null);
 
   // Sync import state (Python bridge)
   syncAccount: Account | null = null;
   syncDateFrom: Date = (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d; })();
-  syncDateTo: Date = new Date();
+  syncDateTo: Date = (() => { const d = new Date(); d.setHours(23, 59, 59, 999); return d; })();
   importingSync = signal(false);
   syncResult = signal<ImportResult | null>(null);
 
