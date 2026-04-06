@@ -32,7 +32,7 @@ export class DashboardComponent implements OnInit {
 
   dashboard = signal<Dashboard | null>(null);
   loading = signal(false);
-  accountId = signal<number | null>(null);
+  accountIds = signal<number[]>([]);
   accountCurrency = signal<string>('USD');
   accountInitialBalance = signal<number>(0);
 
@@ -268,11 +268,13 @@ export class DashboardComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.accountService.selectedAccountIds$.subscribe(ids => {
+      this.accountIds.set(ids);
+      if (ids.length) this.load();
+    });
     this.accountService.selectedAccount$.subscribe(account => {
-      this.accountId.set(account?.id ?? null);
       this.accountCurrency.set(account?.currency ?? 'USD');
       this.accountInitialBalance.set(account?.initialBalance ?? 0);
-      if (account) this.load();
     });
   }
 
@@ -285,10 +287,10 @@ export class DashboardComponent implements OnInit {
   }
 
   load(): void {
-    const id = this.accountId();
-    if (!id) return;
+    const ids = this.accountIds();
+    if (!ids.length) return;
     this.loading.set(true);
-    this.dashboardService.getDashboard(id, this.selectedYear, this.selectedMonth ?? undefined)
+    this.dashboardService.getDashboard(ids, this.selectedYear, this.selectedMonth ?? undefined)
       .subscribe({
         next: data => { this.dashboard.set(data); this.loading.set(false); },
         error: () => this.loading.set(false)
@@ -320,7 +322,7 @@ export class DashboardComponent implements OnInit {
       next: () => {
         this.syncing.set(false);
         this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: 'All accounts have been resynced.', life: 3000 });
-        if (this.accountId()) this.load();
+        if (this.accountIds().length) this.load();
       },
       error: () => {
         this.syncing.set(false);

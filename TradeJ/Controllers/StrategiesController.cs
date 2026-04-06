@@ -10,12 +10,11 @@ namespace TradeJ.Controllers;
 [Route("api/[controller]")]
 public class StrategiesController(AppDbContext db) : ControllerBase
 {
-    // GET /api/strategies?accountId=1
+    // GET /api/strategies
     [HttpGet]
-    public async Task<ActionResult<List<StrategyListItemDto>>> GetAll([FromQuery] int accountId)
+    public async Task<ActionResult<List<StrategyListItemDto>>> GetAll()
     {
         var strategies = await db.Strategies
-            .Where(s => s.AccountId == accountId)
             .Include(s => s.TradeStrategies)
                 .ThenInclude(ts => ts.Trade)
             .OrderBy(s => s.Name)
@@ -42,15 +41,13 @@ public class StrategiesController(AppDbContext db) : ControllerBase
         return Ok(ToDetail(s, baseUrl));
     }
 
-    // POST /api/strategies?accountId=1
+    // POST /api/strategies
     [HttpPost]
     public async Task<ActionResult<StrategyDetailDto>> Create(
-        [FromQuery] int accountId,
         [FromBody] CreateStrategyDto dto)
     {
         var strategy = new Strategy
         {
-            AccountId   = accountId,
             Name        = dto.Name,
             Description = dto.Description,
             CreatedAt   = DateTime.UtcNow,
@@ -151,7 +148,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
         var trades = s.TradeStrategies.Select(ts => ts.Trade).OrderByDescending(t => t.EntryTime).ToList();
         var stats  = CalcStats(trades);
         return new StrategyDetailDto(
-            s.Id, s.AccountId, s.Name, s.Description,
+            s.Id, s.Name, s.Description,
             s.ImageData != null ? $"{baseUrl}/api/strategies/{s.Id}/image" : null,
             stats,
             trades.Select(t => new StrategyTradeDto(

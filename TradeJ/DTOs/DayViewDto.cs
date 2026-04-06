@@ -8,11 +8,16 @@ public record DayGroup(
     int WeekNumber,
     DayStats Stats,
     List<DayTradeItem> Trades,
-    string? Note);
+    string? Note,
+    List<int> TagIds);
 
-public record DayNoteDto(int Id, string Date, string Content, DateTime UpdatedAt);
+public record DayNoteDto(int Id, string Date, string Content, DateTime UpdatedAt, List<int> TagIds);
 
 public record SaveDayNoteRequest(string Content);
+
+public record DayTagDefDto(int Id, string Name, string Color);
+
+public record SaveDayTagDefRequest(string Name, string Color = "#6366f1");
 
 public record DayStats(
     int TotalTrades,

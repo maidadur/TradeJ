@@ -9,12 +9,12 @@ public class DashboardController(DashboardService dashboardService) : Controller
 {
     [HttpGet]
     public async Task<IActionResult> Get(
-        [FromQuery] int accountId,
+        [FromQuery] int[] accountIds,
         [FromQuery] int? year = null,
         [FromQuery] int? month = null)
     {
         var resolvedYear = year ?? DateTime.UtcNow.Year;
-        var result = await dashboardService.GetDashboardAsync(accountId, resolvedYear, month);
+        var result = await dashboardService.GetDashboardAsync(accountIds, resolvedYear, month);
         return Ok(result);
     }
 }

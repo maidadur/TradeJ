@@ -1,24 +1,25 @@
-<div class="notebook-page">
+<div class="notebook-page" (click)="closeTagPicker()">
 
   <!-- Header -->
   <div class="page-header">
     <h1 class="page-title">Notebook</h1>
     <span class="note-count" *ngIf="total() > 0">{{ total() }} day notes</span>
-  </div>
-
-  <!-- Month filter pills -->
-  <div class="month-filters" *ngIf="availableMonths().length > 0">
-    <button
-      class="month-pill"
-      [class.month-pill--active]="selectedMonth() === null"
-      (click)="selectMonth(null)"
-    >All</button>
-    <button
-      *ngFor="let m of availableMonths()"
-      class="month-pill"
-      [class.month-pill--active]="selectedMonth() === m"
-      (click)="selectMonth(m)"
-    >{{ formatMonthLabel(m) }}</button>
+    <div class="header-controls">
+      <p-select
+        [options]="yearOptions()"
+        [ngModel]="selectedYear()"
+        (ngModelChange)="selectedYear.set($event); onFilterChange()"
+        styleClass="filter-select"
+      />
+      <p-select
+        [options]="monthOptions"
+        [ngModel]="selectedMonth()"
+        optionLabel="label"
+        optionValue="value"
+        (ngModelChange)="selectedMonth.set($event); onFilterChange()"
+        styleClass="filter-select"
+      />
+    </div>
   </div>
 
   <!-- Loading -->
@@ -44,11 +45,64 @@
             [class.pi-chevron-right]="expandedDate !== note.date"
             [class.pi-chevron-down]="expandedDate === note.date"></i>
         </button>
+
         <div class="note-meta">
           <span class="note-date">{{ formatDate(note.date) }}</span>
           <span class="note-updated">Last edited {{ formatUpdated(note.updatedAt) }}</span>
         </div>
-        <div class="note-preview" *ngIf="expandedDate !== note.date">
+
+        <!-- Tags row -->
+        <div class="note-tags" (click)="$event.stopPropagation()">
+          <span
+            *ngFor="let tag of getTagsForNote(note)"
+            class="day-tag-chip"
+            [style.background]="tag.color + '22'"
+            [style.border-color]="tag.color"
+            [style.color]="tag.color"
+            (click)="toggleTag(note, tag)"
+            pTooltip="Remove tag"
+          >{{ tag.name }} <i class="pi pi-times chip-remove"></i></span>
+
+          <!-- Add tag button -->
+          <button
+            class="add-tag-btn"
+            (click)="toggleTagPicker(note.date, $event)"
+            [class.add-tag-btn--active]="openTagPickerDate === note.date"
+            pTooltip="Add day tag"
+          >
+            <i class="pi pi-tag"></i>
+          </button>
+
+          <!-- Tag picker dropdown -->
+          <div class="tag-picker-panel" *ngIf="openTagPickerDate === note.date" (click)="$event.stopPropagation()">
+            <div *ngIf="dayTagDefs().length === 0" class="tag-picker-empty">
+              No day tags yet. Create one below.
+            </div>
+            <input
+              class="tag-filter-input"
+              [(ngModel)]="tagFilterText[note.date]"
+              placeholder="Filter tags..."
+              (click)="$event.stopPropagation()"
+            />
+            <div class="tag-picker-tags">
+              <button
+                *ngFor="let tag of getFilteredTags(note)"
+                class="tag-option"
+                [class.tag-option--selected]="isTagSelected(note, tag.id)"
+                [style.border-color]="isTagSelected(note, tag.id) ? tag.color : ''"
+                [style.color]="isTagSelected(note, tag.id) ? tag.color : ''"
+                (click)="toggleTag(note, tag)"
+              >{{ tag.name }}</button>
+            </div>
+            <div class="tag-picker-create">
+              <input class="tag-filter-input" [(ngModel)]="newTagName" placeholder="New tag name..." (click)="$event.stopPropagation()" />
+              <input type="color" [(ngModel)]="newTagColor" class="tag-color-input" title="Tag color" />
+              <button class="tag-create-btn" (click)="createAndSelectTag(note)" [disabled]="!newTagName.trim()">+ Create</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="note-preview" *ngIf="expandedDate !== note.date && stripHtml(note.content)">
           {{ stripHtml(note.content) | slice:0:120 }}{{ stripHtml(note.content).length > 120 ? '...' : '' }}
         </div>
         <span *ngIf="isSaving(note.date)" class="note-saving">

@@ -31,7 +31,7 @@ export interface PagedResult<T> {
 }
 
 export interface TradeFilter {
-  accountId: number;
+  accountIds: number[];
   page?: number;
   pageSize?: number;
   symbol?: string;

@@ -40,7 +40,6 @@ export interface StrategyNote {
 
 export interface StrategyDetail {
   id: number;
-  accountId: number;
   name: string;
   description?: string;
   imageUrl?: string;

@@ -4,7 +4,7 @@
     <span class="trade-count" *ngIf="totalCount() > 0">{{totalCount()}} trades</span>
   </div>
 
-  @if (!accountId()) {
+  @if (!accountIds().length) {
     <div class="empty-state">
       <i class="pi pi-wallet" style="font-size:3rem;color:#475569"></i>
       <p>Select an account from the sidebar to view trades.</p>

@@ -34,7 +34,7 @@ export class TradeListComponent implements OnInit {
   loading = signal(false);
   totalCount = signal(0);
   currentPage = signal(1);
-  accountId = signal<number | null>(null);
+  accountIds = signal<number[]>([]);
   strategyMap = signal<Map<number, string>>(new Map());
   pageSize = 50;
 
@@ -46,26 +46,26 @@ export class TradeListComponent implements OnInit {
   statusOptions = ['Open', 'Closed', 'Cancelled'];
 
   ngOnInit(): void {
-    this.accountService.selectedAccount$.subscribe(account => {
-      this.accountId.set(account?.id ?? null);
-      if (account) {
+    this.accountService.selectedAccountIds$.subscribe(ids => {
+      this.accountIds.set(ids);
+      if (ids.length) {
         this.currentPage.set(1);
         this.loadTrades();
-        this.strategyService.getAll(account.id).subscribe(list => {
-          const map = new Map<number, string>();
-          list.forEach(s => map.set(s.id, s.name));
-          this.strategyMap.set(map);
+        this.strategyService.getAll().subscribe(list => {
+            const map = new Map<number, string>();
+            list.forEach(s => map.set(s.id, s.name));
+            this.strategyMap.set(map);
         });
       }
     });
   }
 
   loadTrades(): void {
-    const id = this.accountId();
-    if (!id) return;
+    const ids = this.accountIds();
+    if (!ids.length) return;
     this.loading.set(true);
     const f: TradeFilter = {
-      accountId: id,
+      accountIds: ids,
       page: this.currentPage(),
       pageSize: this.pageSize,
       symbol: this.filter.symbol,

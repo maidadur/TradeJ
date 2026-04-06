@@ -13,7 +13,6 @@ public record StrategyListItemDto(
 
 public record StrategyDetailDto(
     int Id,
-    int AccountId,
     string Name,
     string? Description,
     string? ImageUrl,

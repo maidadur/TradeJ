@@ -13,14 +13,14 @@ public class DayViewController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<DayViewDto>> Get(
-        [FromQuery] int accountId,
+        [FromQuery] int[] accountIds,
         [FromQuery] int? year,
         [FromQuery] int? month,
         [FromQuery] DateTime? dateFrom,
         [FromQuery] DateTime? dateTo)
     {
         var query = db.Trades
-            .Where(t => t.AccountId == accountId && t.Status == TradeStatus.Closed);
+            .Where(t => accountIds.Contains(t.AccountId) && t.Status == TradeStatus.Closed);
 
         if (dateFrom.HasValue)
             query = query.Where(t => t.ExitTime >= dateFrom.Value);
@@ -42,8 +42,13 @@ public class DayViewController(AppDbContext db) : ControllerBase
             .ToList();
 
         var notesMap = await db.DayNotes
-            .Where(n => n.AccountId == accountId && dateStrings.Contains(n.Date))
+            .Where(n => dateStrings.Contains(n.Date))
             .ToDictionaryAsync(n => n.Date, n => n.Content);
+
+        var tagsMap = await db.DayTags
+            .Where(dt => dateStrings.Contains(dt.Date))
+            .GroupBy(dt => dt.Date)
+            .ToDictionaryAsync(g => g.Key, g => g.Select(dt => dt.DayTagDefId).ToList());
 
         var groups = trades
             .GroupBy(t => t.ExitTime!.Value.Date)
@@ -103,7 +108,8 @@ public class DayViewController(AppDbContext db) : ControllerBase
                             ? (int)(t.ExitTime.Value - t.EntryTime).TotalMinutes
                             : 0
                     )).ToList(),
-                    Note: notesMap.TryGetValue(dateOnly, out var noteContent) ? noteContent : null
+                    Note: notesMap.TryGetValue(dateOnly, out var noteContent) ? noteContent : null,
+                    TagIds: tagsMap.TryGetValue(dateOnly, out var tagIds) ? tagIds : []
                 );
             })
             .ToList();

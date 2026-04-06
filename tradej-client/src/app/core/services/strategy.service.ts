@@ -10,16 +10,16 @@ export class StrategyService {
   private readonly base = '/api/strategies';
   private readonly notesBase = '/api/strategynotes';
 
-  getAll(accountId: number) {
-    return this.http.get<StrategyListItem[]>(`${this.base}?accountId=${accountId}`);
+  getAll() {
+    return this.http.get<StrategyListItem[]>(this.base);
   }
 
   getById(id: number) {
     return this.http.get<StrategyDetail>(`${this.base}/${id}`);
   }
 
-  create(accountId: number, dto: CreateStrategyDto) {
-    return this.http.post<StrategyDetail>(`${this.base}?accountId=${accountId}`, dto);
+  create(dto: CreateStrategyDto) {
+    return this.http.post<StrategyDetail>(this.base, dto);
   }
 
   update(id: number, dto: UpdateStrategyDto) {

@@ -8,7 +8,6 @@ import { InputTextModule } from 'primeng/inputtext';
 import { TextareaModule } from 'primeng/textarea';
 import { StrategyService } from '../../../core/services/strategy.service';
 import { StrategyListItem, CreateStrategyDto } from '../../../core/models/strategy.model';
-import { AccountService } from '../../../core/services/account.service';
 
 @Component({
   selector: 'app-strategy-list',
@@ -22,7 +21,6 @@ import { AccountService } from '../../../core/services/account.service';
 })
 export class StrategyListComponent implements OnInit {
   private strategyService = inject(StrategyService);
-  private accountService = inject(AccountService);
 
   strategies = signal<StrategyListItem[]>([]);
   loading = signal(false);
@@ -32,18 +30,13 @@ export class StrategyListComponent implements OnInit {
   newDescription = '';
   creating = false;
 
-  get accountId(): number {
-    return this.accountService.selectedAccount?.id ?? 0;
-  }
-
   ngOnInit(): void {
     this.load();
   }
 
   load(): void {
-    if (!this.accountId) return;
     this.loading.set(true);
-    this.strategyService.getAll(this.accountId).subscribe({
+    this.strategyService.getAll().subscribe({
       next: items => { this.strategies.set(items); this.loading.set(false); },
       error: () => this.loading.set(false)
     });
@@ -62,7 +55,7 @@ export class StrategyListComponent implements OnInit {
       name: this.newName.trim(),
       description: this.newDescription.trim() || undefined
     };
-    this.strategyService.create(this.accountId, dto).subscribe({
+    this.strategyService.create(dto).subscribe({
       next: detail => {
         this.strategies.update(list => [...list, {
           id: detail.id,

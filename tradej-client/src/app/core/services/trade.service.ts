@@ -9,9 +9,11 @@ export class TradeService {
 
   getTrades(filter: TradeFilter) {
     let params = new HttpParams()
-      .set('accountId', filter.accountId)
       .set('page', filter.page ?? 1)
       .set('pageSize', filter.pageSize ?? 50);
+    for (const id of filter.accountIds) {
+      params = params.append('accountIds', id);
+    }
 
     if (filter.symbol) params = params.set('symbol', filter.symbol);
     if (filter.direction) params = params.set('direction', filter.direction);

@@ -1,4 +1,4 @@
-<div class="day-view-page">
+<div class="day-view-page" (click)="closeTagPicker()">
 
   <!-- Page header -->
   <div class="page-header">
@@ -50,6 +50,44 @@
             <span class="day-pnl" [class.positive]="day.stats.netPnL >= 0" [class.negative]="day.stats.netPnL < 0">
               Net P&amp;L {{ formatPnL(day.stats.netPnL) }}
             </span>
+
+            <!-- Day tag chips + picker -->
+            <div class="day-tag-row" (click)="$event.stopPropagation()">
+              <span
+                *ngFor="let tag of getTagsForDate(day.date)"
+                class="day-tag-chip"
+                [style.background]="tag.color + '22'"
+                [style.border-color]="tag.color"
+                [style.color]="tag.color"
+                (click)="removeDayTag(day.date, tag, $event)"
+                pTooltip="Remove tag">
+                {{ tag.name }} <i class="pi pi-times chip-remove"></i>
+              </span>
+              <button class="add-tag-btn"
+                [class.add-tag-btn--active]="openTagPickerDate === day.date"
+                (click)="toggleTagPicker(day.date, $event)"
+                pTooltip="Tag this day">
+                <i class="pi pi-tag"></i>
+              </button>
+              <div class="tag-picker-panel" *ngIf="openTagPickerDate === day.date" (click)="$event.stopPropagation()">
+                <div *ngIf="dayTagDefs().length === 0" class="tag-picker-empty">No day tags yet. Create one below.</div>
+                <input class="tag-filter-input" [(ngModel)]="tagFilterText[day.date]" placeholder="Filter tags..." (click)="$event.stopPropagation()" />
+                <div class="tag-picker-tags">
+                  <button *ngFor="let tag of getFilteredTagsForPicker(day.date)"
+                    class="tag-option"
+                    [class.tag-option--selected]="isTagSelected(day.date, tag.id)"
+                    [style.border-color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+                    [style.color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+                    (click)="toggleDayTag(day.date, tag, $event)">{{ tag.name }}</button>
+                </div>
+                <div class="tag-picker-create">
+                  <input class="tag-filter-input" [(ngModel)]="newTagName" placeholder="New tag name..." (click)="$event.stopPropagation()" />
+                  <input type="color" [(ngModel)]="newTagColor" class="tag-color-input" title="Tag color" />
+                  <button class="tag-create-btn" (click)="createAndSelectTag(day.date)" [disabled]="!newTagName.trim()">+ Create</button>
+                </div>
+              </div>
+            </div>
+
             <button class="note-btn" [class.note-btn--has-note]="hasNote(day.date)"
               (click)="openNoteDialog(day, $event)">
               <i class="pi" [class.pi-file]="!hasNote(day.date)" [class.pi-file-edit]="hasNote(day.date)"></i>
@@ -204,6 +242,44 @@
                 <span class="day-pnl" [class.positive]="day.stats.netPnL >= 0" [class.negative]="day.stats.netPnL < 0">
                   {{ formatPnL(day.stats.netPnL) }}
                 </span>
+
+                <!-- Day tag chips + picker (week view) -->
+                <div class="day-tag-row" (click)="$event.stopPropagation()">
+                  <span
+                    *ngFor="let tag of getTagsForDate(day.date)"
+                    class="day-tag-chip"
+                    [style.background]="tag.color + '22'"
+                    [style.border-color]="tag.color"
+                    [style.color]="tag.color"
+                    (click)="removeDayTag(day.date, tag, $event)"
+                    pTooltip="Remove tag">
+                    {{ tag.name }} <i class="pi pi-times chip-remove"></i>
+                  </span>
+                  <button class="add-tag-btn"
+                    [class.add-tag-btn--active]="openTagPickerDate === day.date"
+                    (click)="toggleTagPicker(day.date, $event)"
+                    pTooltip="Tag this day">
+                    <i class="pi pi-tag"></i>
+                  </button>
+                  <div class="tag-picker-panel" *ngIf="openTagPickerDate === day.date" (click)="$event.stopPropagation()">
+                    <div *ngIf="dayTagDefs().length === 0" class="tag-picker-empty">No day tags yet. Create one below.</div>
+                    <input class="tag-filter-input" [(ngModel)]="tagFilterText[day.date]" placeholder="Filter tags..." (click)="$event.stopPropagation()" />
+                    <div class="tag-picker-tags">
+                      <button *ngFor="let tag of getFilteredTagsForPicker(day.date)"
+                        class="tag-option"
+                        [class.tag-option--selected]="isTagSelected(day.date, tag.id)"
+                        [style.border-color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+                        [style.color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+                        (click)="toggleDayTag(day.date, tag, $event)">{{ tag.name }}</button>
+                    </div>
+                    <div class="tag-picker-create">
+                      <input class="tag-filter-input" [(ngModel)]="newTagName" placeholder="New tag name..." (click)="$event.stopPropagation()" />
+                      <input type="color" [(ngModel)]="newTagColor" class="tag-color-input" title="Tag color" />
+                      <button class="tag-create-btn" (click)="createAndSelectTag(day.date)" [disabled]="!newTagName.trim()">+ Create</button>
+                    </div>
+                  </div>
+                </div>
+
                 <button class="note-btn" [class.note-btn--has-note]="hasNote(day.date)"
                   (click)="openNoteDialog(day, $event)">
                   <i class="pi" [class.pi-file]="!hasNote(day.date)" [class.pi-file-edit]="hasNote(day.date)"></i>
@@ -318,6 +394,25 @@
           </div>
         </ng-container>
       </div>
+
+      <!-- Tag statistics -->
+      <div class="cal-tag-stats" *ngIf="tagStats().length > 0">
+        <div class="cal-tag-stats-title">Day Tag Stats</div>
+        <div class="donut-wrap" *ngIf="donutChartData()">
+          <p-chart type="doughnut" [data]="donutChartData()" [options]="donutChartOptions" height="150px" />
+        </div>
+        <div class="tag-bars">
+          <div *ngFor="let s of tagStats()" class="tag-bar-row">
+            <span class="tag-dot" [style.background]="s.color"></span>
+            <span class="tag-bar-label">{{ s.name }}</span>
+            <div class="tag-bar-track">
+              <div class="tag-bar-fill" [style.width.%]="s.pct" [style.background]="s.color"></div>
+            </div>
+            <span class="tag-bar-pct">{{ s.pct }}%</span>
+            <span class="tag-bar-count">{{ s.count }}d</span>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -375,6 +470,43 @@
               [class.negative]="day.stats.profitFactor < 1 && day.stats.profitFactor > 0">
               {{ day.stats.profitFactor }}
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Day tags in dialog -->
+      <div class="note-dialog-tags" (click)="$event.stopPropagation()">
+        <span
+          *ngFor="let tag of getTagsForDate(day.date)"
+          class="day-tag-chip"
+          [style.background]="tag.color + '22'"
+          [style.border-color]="tag.color"
+          [style.color]="tag.color"
+          (click)="removeDayTag(day.date, tag, $event)"
+          pTooltip="Remove tag">
+          {{ tag.name }} <i class="pi pi-times chip-remove"></i>
+        </span>
+        <button class="add-tag-btn"
+          [class.add-tag-btn--active]="openTagPickerDate === day.date"
+          (click)="toggleTagPicker(day.date, $event)"
+          pTooltip="Tag this day">
+          <i class="pi pi-tag"></i>
+        </button>
+        <div class="tag-picker-panel" *ngIf="openTagPickerDate === day.date" (click)="$event.stopPropagation()">
+          <div *ngIf="dayTagDefs().length === 0" class="tag-picker-empty">No day tags yet. Create one below.</div>
+          <input class="tag-filter-input" [(ngModel)]="tagFilterText[day.date]" placeholder="Filter tags..." (click)="$event.stopPropagation()" />
+          <div class="tag-picker-tags">
+            <button *ngFor="let tag of getFilteredTagsForPicker(day.date)"
+              class="tag-option"
+              [class.tag-option--selected]="isTagSelected(day.date, tag.id)"
+              [style.border-color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+              [style.color]="isTagSelected(day.date, tag.id) ? tag.color : ''"
+              (click)="toggleDayTag(day.date, tag, $event)">{{ tag.name }}</button>
+          </div>
+          <div class="tag-picker-create">
+            <input class="tag-filter-input" [(ngModel)]="newTagName" placeholder="New tag name..." (click)="$event.stopPropagation()" />
+            <input type="color" [(ngModel)]="newTagColor" class="tag-color-input" title="Tag color" />
+            <button class="tag-create-btn" (click)="createAndSelectTag(day.date)" [disabled]="!newTagName.trim()">+ Create</button>
           </div>
         </div>
       </div>

@@ -36,6 +36,7 @@ export interface DayGroup {
   stats: DayStats;
   trades: DayTradeItem[];
   note?: string;
+  tagIds: number[];
 }
 
 export interface DayViewData {
@@ -54,6 +55,7 @@ export interface DayNote {
   date: string;
   content: string;
   updatedAt: string;
+  tagIds: number[];
 }
 
 export interface DayNotePage {
@@ -61,5 +63,11 @@ export interface DayNotePage {
   page: number;
   pageSize: number;
   items: DayNote[];
+}
+
+export interface DayTagDef {
+  id: number;
+  name: string;
+  color: string;
 }
 

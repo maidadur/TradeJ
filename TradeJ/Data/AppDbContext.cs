@@ -12,6 +12,8 @@ public class AppDbContext : DbContext
     public DbSet<TagCategory> TagCategories => Set<TagCategory>();
     public DbSet<Tag> Tags => Set<Tag>();
     public DbSet<TradeTag> TradeTags => Set<TradeTag>();
+    public DbSet<DayTagDef> DayTagDefs => Set<DayTagDef>();
+    public DbSet<DayTag> DayTags => Set<DayTag>();
     public DbSet<DayNote> DayNotes => Set<DayNote>();
     public DbSet<Strategy> Strategies => Set<Strategy>();
     public DbSet<TradeStrategy> TradeStrategies => Set<TradeStrategy>();
@@ -70,19 +72,16 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<DayNote>(entity =>
         {
-            entity.HasOne(n => n.Account)
-                .WithMany()
-                .HasForeignKey(n => n.AccountId)
-                .OnDelete(DeleteBehavior.Cascade);
-            entity.HasIndex(n => new { n.AccountId, n.Date }).IsUnique();
+            entity.HasIndex(n => n.Date).IsUnique();
         });
 
-        modelBuilder.Entity<Strategy>(entity =>
+        modelBuilder.Entity<DayTag>(entity =>
         {
-            entity.HasOne(s => s.Account)
-                .WithMany()
-                .HasForeignKey(s => s.AccountId)
+            entity.HasOne(dt => dt.DayTagDef)
+                .WithMany(d => d.DayTags)
+                .HasForeignKey(dt => dt.DayTagDefId)
                 .OnDelete(DeleteBehavior.Cascade);
+            entity.HasIndex(dt => new { dt.Date, dt.DayTagDefId }).IsUnique();
         });
 
         modelBuilder.Entity<TradeStrategy>(entity =>

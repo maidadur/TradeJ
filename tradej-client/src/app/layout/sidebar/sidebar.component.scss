@@ -35,6 +35,107 @@
   gap: 0.5rem;
 }
 
+// ── Multi-account selector ────────────────────────────────────────────────────
+.acc-wrap {
+  position: relative;
+}
+
+.acc-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: rgba(99,102,241,0.08);
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: $radius-md;
+  color: $text;
+  font-size: $size-sm;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+
+  &:hover { background: rgba(99,102,241,0.14); }
+
+  .pi { font-size: 0.7rem; color: $text-secondary; }
+}
+
+.acc-trigger-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.acc-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  background: #161927;
+  border: 1px solid $border;
+  border-radius: $radius-md;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  padding: 0.5rem 0;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.acc-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 1rem;
+  cursor: pointer;
+  font-size: $size-sm;
+  color: $text;
+
+  &:hover { background: rgba(99,102,241,0.08); }
+
+  input[type="checkbox"] {
+    accent-color: #6366f1;
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+}
+
+.acc-all-row {
+  font-weight: 600;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid $border;
+}
+
+.acc-row-label { flex: 1; }
+.acc-name      { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.acc-divider {
+  font-size: $size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: $text-secondary;
+  padding: 0.5rem 1rem 0.25rem;
+}
+
+.acc-manage-row {
+  border-top: 1px solid $border;
+  padding: 0.5rem 1rem 0.25rem;
+  margin-top: 0.25rem;
+
+  a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $text-secondary;
+    font-size: $size-sm;
+    text-decoration: none;
+    &:hover { color: $text; }
+    .pi { font-size: $size-sm; }
+  }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 .broker-badge {
   font-size: $size-xs;
   font-weight: 600;

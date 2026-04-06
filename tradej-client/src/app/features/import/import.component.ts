@@ -85,7 +85,10 @@ export class ImportComponent {
   constructor() {
     this.accountService.getAll().subscribe(list => {
       this.accounts.set(list);
-      if (!this.selectedAccount) this.selectedAccount = this.accountService.selectedAccount;
+      if (!this.selectedAccount) {
+        const ids = this.accountService.selectedAccountIds;
+        this.selectedAccount = list.find(a => a.id === ids[0]) ?? list[0] ?? null;
+      }
       // default live account to first MT5 live-enabled account
       const mt5 = this.mt5LiveAccounts();
       if (mt5.length > 0 && !this.liveAccount) this.liveAccount = mt5[0];

@@ -1,42 +1,51 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, tap } from 'rxjs';
+import { BehaviorSubject, combineLatest, tap } from 'rxjs';
+import { distinctUntilChanged, map } from 'rxjs/operators';
 import { Account, CreateAccountDto, UpdateAccountDto } from '../models/account.model';
 
-const SELECTED_ACCOUNT_KEY = 'tradej_selected_account';
+const SELECTED_ACCOUNT_IDS_KEY = 'tradej_selected_account_ids';
 
 @Injectable({ providedIn: 'root' })
 export class AccountService {
   private http = inject(HttpClient);
   private readonly apiUrl = '/api/accounts';
 
-  private _selectedAccount = new BehaviorSubject<Account | null>(
-    this.loadStoredAccount()
+  private _allAccounts = new BehaviorSubject<Account[]>([]);
+  allAccounts$ = this._allAccounts.asObservable();
+
+  private _selectedAccountIds = new BehaviorSubject<number[]>(this.loadStoredIds());
+  selectedAccountIds$ = this._selectedAccountIds.asObservable();
+
+  /** Backward-compat: emits the first selected account (for note-saving, currency display, etc.) */
+  readonly selectedAccount$ = combineLatest([
+    this._selectedAccountIds,
+    this._allAccounts,
+  ]).pipe(
+    map(([ids, accounts]) =>
+      ids.length > 0 ? (accounts.find(a => a.id === ids[0]) ?? null) : null
+    ),
+    distinctUntilChanged((a, b) => a?.id === b?.id)
   );
-  selectedAccount$ = this._selectedAccount.asObservable();
 
-  get selectedAccount(): Account | null {
-    return this._selectedAccount.value;
-  }
+  get selectedAccountIds(): number[] { return this._selectedAccountIds.value; }
+  get allAccounts(): Account[]        { return this._allAccounts.value; }
 
-  selectAccount(account: Account | null): void {
-    this._selectedAccount.next(account);
-    if (account) localStorage.setItem(SELECTED_ACCOUNT_KEY, JSON.stringify(account));
-    else localStorage.removeItem(SELECTED_ACCOUNT_KEY);
+  selectAccountIds(ids: number[]): void {
+    const cur = this._selectedAccountIds.value;
+    if (JSON.stringify(cur) === JSON.stringify(ids)) return;
+    this._selectedAccountIds.next(ids);
+    localStorage.setItem(SELECTED_ACCOUNT_IDS_KEY, JSON.stringify(ids));
   }
 
   getAll() {
     return this.http.get<Account[]>(this.apiUrl).pipe(
       tap(accounts => {
-        // Auto-select first account if none selected
-        if (!this._selectedAccount.value && accounts.length > 0)
-          this.selectAccount(accounts[0]);
-        // Refresh stored account data if it was selected
-        const stored = this._selectedAccount.value;
-        if (stored) {
-          const refreshed = accounts.find(a => a.id === stored.id);
-          if (refreshed) this.selectAccount(refreshed);
-        }
+        this._allAccounts.next(accounts);
+        const stored = this.loadStoredIds();
+        const valid  = stored.filter(id => accounts.some(a => a.id === id));
+        const toSelect = valid.length > 0 ? valid : accounts.map(a => a.id);
+        this.selectAccountIds(toSelect);
       })
     );
   }
@@ -53,10 +62,17 @@ export class AccountService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
-  private loadStoredAccount(): Account | null {
+  private loadStoredIds(): number[] {
     try {
-      const raw = localStorage.getItem(SELECTED_ACCOUNT_KEY);
-      return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+      const raw = localStorage.getItem(SELECTED_ACCOUNT_IDS_KEY);
+      if (raw) return JSON.parse(raw);
+      // Migrate from old single-account key
+      const oldRaw = localStorage.getItem('tradej_selected_account');
+      if (oldRaw) {
+        const old = JSON.parse(oldRaw) as { id: number };
+        if (old?.id) return [old.id];
+      }
+      return [];
+    } catch { return []; }
   }
 }

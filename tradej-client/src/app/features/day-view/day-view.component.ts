@@ -8,17 +8,18 @@ import { SelectModule } from 'primeng/select';
 import { TagModule } from 'primeng/tag';
 import { EditorModule } from 'primeng/editor';
 import { DialogModule } from 'primeng/dialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { Subject, debounceTime, mergeMap, map } from 'rxjs';
 import { DayViewService } from '../../core/services/day-view.service';
 import { AccountService } from '../../core/services/account.service';
-import { DayGroup, DayStats, DayTradeItem, DayViewData, WeekGroup } from '../../core/models/day-view.model';
+import { DayGroup, DayStats, DayTagDef, DayTradeItem, DayViewData, WeekGroup } from '../../core/models/day-view.model';
 
 type ViewMode = 'day' | 'week';
 
 @Component({
   selector: 'app-day-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ChartModule, ButtonModule, SelectModule, TagModule, EditorModule, DialogModule],
+  imports: [CommonModule, FormsModule, ChartModule, ButtonModule, SelectModule, TagModule, EditorModule, DialogModule, TooltipModule],
   templateUrl: './day-view.component.html',
   styleUrl: './day-view.component.scss'
 })
@@ -29,7 +30,7 @@ export class DayViewComponent implements OnInit {
 
   data = signal<DayViewData | null>(null);
   loading = signal(false);
-  accountId = signal<number | null>(null);
+  accountIds = signal<number[]>([]);
 
   viewMode: ViewMode = 'day';
   selectedYear = new Date().getFullYear();
@@ -42,6 +43,74 @@ export class DayViewComponent implements OnInit {
   dayNotes = new Map<string, string>();
   savingNotes = signal<Set<string>>(new Set());
   private noteSave$ = new Subject<{ date: string; content: string }>();
+
+  // Day tags state: map of date -> tagId[]
+  dayTags = new Map<string, number[]>();
+  dayTagDefs = signal<DayTagDef[]>([]);
+  openTagPickerDate: string | null = null;
+  tagFilterText: Record<string, string> = {};
+  newTagName = '';
+  newTagColor = '#6366f1';
+
+  tagMap = computed(() => {
+    const m = new Map<number, DayTagDef>();
+    for (const t of this.dayTagDefs()) m.set(t.id, t);
+    return m;
+  });
+
+  // ---- Tag statistics ----
+  tagStats = computed(() => {
+    const ds = this.days();
+    const total = ds.length;
+    if (total === 0) return [];
+    const counts = new Map<number, number>();
+    for (const d of ds) {
+      for (const tid of (d.tagIds ?? [])) {
+        counts.set(tid, (counts.get(tid) ?? 0) + 1);
+      }
+    }
+    const tagM = this.tagMap();
+    return [...counts.entries()]
+      .map(([id, count]) => ({
+        id,
+        name: tagM.get(id)?.name ?? `Tag ${id}`,
+        color: tagM.get(id)?.color ?? '#6366f1',
+        count,
+        pct: Math.round((count / total) * 100)
+      }))
+      .sort((a, b) => b.count - a.count);
+  });
+
+  donutChartData = computed(() => {
+    const stats = this.tagStats();
+    if (stats.length === 0) return null;
+    return {
+      labels: stats.map(s => s.name),
+      datasets: [{
+        data: stats.map(s => s.count),
+        backgroundColor: stats.map(s => s.color),
+        borderColor: '#1e293b',
+        borderWidth: 2
+      }]
+    };
+  });
+
+  donutChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx: any) => {
+            const stats = this.tagStats();
+            const s = stats[ctx.dataIndex];
+            return ` ${s?.name}: ${s?.count} day${s?.count !== 1 ? 's' : ''} (${s?.pct}%)`;
+          }
+        }
+      }
+    }
+  };
 
   // Note dialog
   noteDialog = signal<{ visible: boolean; day: DayGroup | null }>(
@@ -67,9 +136,7 @@ export class DayViewComponent implements OnInit {
     this.noteSave$.pipe(
       debounceTime(1500),
       mergeMap(({ date, content }) => {
-        const accountId = this.accountId();
-        if (!accountId) return [];
-        return this.dayViewService.saveNote(accountId, date, content).pipe(
+        return this.dayViewService.saveNote(date, content).pipe(
           map(() => date)
         );
       })
@@ -77,15 +144,18 @@ export class DayViewComponent implements OnInit {
       this.savingNotes.update(s => { const n = new Set(s); n.delete(date); return n; });
     });
 
-    this.accountService.selectedAccount$.subscribe(account => {
-      this.accountId.set(account?.id ?? null);
-      if (account) this.load();
+    this.accountService.selectedAccountIds$.subscribe(ids => {
+      this.accountIds.set(ids);
+      if (ids.length) {
+        this.load();
+        this.dayViewService.getDayTagDefs().subscribe(defs => this.dayTagDefs.set(defs));
+      }
     });
   }
 
   load(): void {
-    const id = this.accountId();
-    if (!id) return;
+    const id = this.accountIds();
+    if (!id.length) return;
     this.loading.set(true);
     this.dayViewService.getDayView(id, this.selectedYear, this.selectedMonth ?? undefined)
       .subscribe({
@@ -96,6 +166,7 @@ export class DayViewComponent implements OnInit {
           this.dayNotes.clear();
           for (const day of result.days) {
             if (day.note) this.dayNotes.set(day.date, day.note);
+            this.dayTags.set(day.date, day.tagIds ?? []);
           }
           // Auto-expand first day
           if (result.days.length > 0) {
@@ -104,6 +175,63 @@ export class DayViewComponent implements OnInit {
         },
         error: () => this.loading.set(false)
       });
+  }
+
+  // ---- Day tags ----
+  getTagsForDate(date: string): DayTagDef[] {
+    const m = this.tagMap();
+    return (this.dayTags.get(date) ?? []).map(id => m.get(id)).filter((t): t is DayTagDef => !!t);
+  }
+
+  isTagSelected(date: string, tagId: number): boolean {
+    return (this.dayTags.get(date) ?? []).includes(tagId);
+  }
+
+  toggleTagPicker(date: string, event: Event): void {
+    event.stopPropagation();
+    this.openTagPickerDate = this.openTagPickerDate === date ? null : date;
+    if (this.openTagPickerDate) this.tagFilterText = {};
+  }
+
+  closeTagPicker(): void {
+    this.openTagPickerDate = null;
+  }
+
+  toggleDayTag(date: string, tag: DayTagDef, event: Event): void {
+    event.stopPropagation();
+    const current = this.dayTags.get(date) ?? [];
+    if (current.includes(tag.id)) {
+      this.dayTags.set(date, current.filter(id => id !== tag.id));
+      this.dayViewService.removeDayTag(date, tag.id).subscribe();
+    } else {
+      this.dayTags.set(date, [...current, tag.id]);
+      this.dayViewService.addDayTag(date, tag.id).subscribe();
+    }
+  }
+
+  removeDayTag(date: string, tag: DayTagDef, event: Event): void {
+    event.stopPropagation();
+    const current = this.dayTags.get(date) ?? [];
+    this.dayTags.set(date, current.filter(id => id !== tag.id));
+    this.dayViewService.removeDayTag(date, tag.id).subscribe();
+  }
+
+  getFilteredTagsForPicker(date: string): DayTagDef[] {
+    const text = (this.tagFilterText[date] ?? '').toLowerCase().trim();
+    return this.dayTagDefs().filter(t => !text || t.name.toLowerCase().includes(text));
+  }
+
+  createAndSelectTag(date: string): void {
+    const name = this.newTagName.trim();
+    if (!name) return;
+    this.dayViewService.createDayTagDef(name, this.newTagColor).subscribe(def => {
+      this.dayTagDefs.update(defs => [...defs, def]);
+      const current = this.dayTags.get(date) ?? [];
+      this.dayTags.set(date, [...current, def.id]);
+      this.dayViewService.addDayTag(date, def.id).subscribe();
+      this.newTagName = '';
+      this.newTagColor = '#6366f1';
+    });
   }
 
   // ---- Notes ----
@@ -214,12 +342,13 @@ export class DayViewComponent implements OnInit {
 
   // ---- Chart ----
   buildChartData(day: DayGroup) {
+    const trades = [...day.trades].reverse();
     let cum = 0;
-    const values = day.trades.map((t: DayTradeItem) => {
+    const values = trades.map((t: DayTradeItem) => {
       cum += t.netPnL;
       return +cum.toFixed(2);
     });
-    const labels = day.trades.map((_: DayTradeItem, i: number) => `#${i + 1}`);
+    const labels = trades.map((_: DayTradeItem, i: number) => `#${i + 1}`);
     const lastVal = values[values.length - 1] ?? 0;
     const color = lastVal >= 0 ? '#2FA87A' : '#F06363';
     const bgColor = lastVal >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)';

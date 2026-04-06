@@ -12,7 +12,7 @@ public class TradesController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
     public async Task<ActionResult<PagedResult<TradeDto>>> GetAll(
-        [FromQuery] int accountId,
+        [FromQuery] int[] accountIds,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 50,
         [FromQuery] string? symbol = null,
@@ -30,7 +30,7 @@ public class TradesController(AppDbContext db) : ControllerBase
             .Include(t => t.Account)
             .Include(t => t.TradeTags)
             .Include(t => t.TradeStrategies)
-            .Where(t => t.AccountId == accountId);
+            .Where(t => accountIds.Contains(t.AccountId));
 
         if (!string.IsNullOrWhiteSpace(symbol))
             query = query.Where(t => t.Symbol.ToLower().Contains(symbol.ToLower()));

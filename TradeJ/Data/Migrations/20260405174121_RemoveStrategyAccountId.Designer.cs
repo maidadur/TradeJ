@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TradeJ.Data;
 
@@ -10,9 +11,11 @@ using TradeJ.Data;
 namespace TradeJ.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405174121_RemoveStrategyAccountId")]
+    partial class RemoveStrategyAccountId
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.5");
@@ -98,6 +101,9 @@ namespace TradeJ.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AccountId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Content")
                         .IsRequired()
                         .HasColumnType("TEXT");
@@ -113,51 +119,10 @@ namespace TradeJ.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Date")
+                    b.HasIndex("AccountId", "Date")
                         .IsUnique();
 
                     b.ToTable("DayNotes");
-                });
-
-            modelBuilder.Entity("TradeJ.Models.DayTag", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("TEXT");
-
-                    b.Property<int>("DayTagDefId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("DayTagDefId");
-
-                    b.HasIndex("Date", "DayTagDefId")
-                        .IsUnique();
-
-                    b.ToTable("DayTags");
-                });
-
-            modelBuilder.Entity("TradeJ.Models.DayTagDef", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Color")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("DayTagDefs");
                 });
 
             modelBuilder.Entity("TradeJ.Models.Strategy", b =>
@@ -377,15 +342,15 @@ namespace TradeJ.Data.Migrations
                     b.ToTable("TradeTags");
                 });
 
-            modelBuilder.Entity("TradeJ.Models.DayTag", b =>
+            modelBuilder.Entity("TradeJ.Models.DayNote", b =>
                 {
-                    b.HasOne("TradeJ.Models.DayTagDef", "DayTagDef")
-                        .WithMany("DayTags")
-                        .HasForeignKey("DayTagDefId")
+                    b.HasOne("TradeJ.Models.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("DayTagDef");
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("TradeJ.Models.StrategyNote", b =>
@@ -473,11 +438,6 @@ namespace TradeJ.Data.Migrations
             modelBuilder.Entity("TradeJ.Models.Account", b =>
                 {
                     b.Navigation("Trades");
-                });
-
-            modelBuilder.Entity("TradeJ.Models.DayTagDef", b =>
-                {
-                    b.Navigation("DayTags");
                 });
 
             modelBuilder.Entity("TradeJ.Models.Strategy", b =>

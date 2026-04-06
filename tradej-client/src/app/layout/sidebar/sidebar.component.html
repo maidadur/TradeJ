@@ -8,33 +8,46 @@
   <!-- Account Selector -->
   <div class="account-section">
     <div class="section-label">Active Account</div>
-    <p-select
-      [options]="accounts()"
-      [(ngModel)]="selectedAccount"
-      optionLabel="name"
-      placeholder="Select account"
-      class="w-full"
-      appendTo="body"
-      (ngModelChange)="onAccountChange($event)"
-      [style]="{'width':'100%'}"
-    >
-      <ng-template #selectedItem let-account>
-        <div class="account-option" *ngIf="account">
-          <span class="broker-badge" [attr.data-broker]="account.broker.toLowerCase()">
-            {{account.broker}}
-          </span>
-          <span>{{account.name}}</span>
+    <div class="acc-wrap">
+      <button class="acc-trigger" (click)="togglePanel()">
+        <span class="acc-trigger-label">{{ triggerLabel }}</span>
+        <i class="pi" [class.pi-chevron-down]="!panelOpen" [class.pi-chevron-up]="panelOpen"></i>
+      </button>
+
+      @if (panelOpen) {
+        <div class="acc-panel">
+          <!-- All accounts row -->
+          <label class="acc-row acc-all-row">
+            <input
+              type="checkbox"
+              [checked]="allSelected"
+              (change)="toggleAll()"
+            >
+            <span class="acc-row-label">All accounts</span>
+          </label>
+
+          <div class="acc-divider">My accounts</div>
+
+          @for (acc of accounts(); track acc.id) {
+            <label class="acc-row">
+              <input
+                type="checkbox"
+                [checked]="isSelected(acc.id)"
+                (change)="toggleAccount(acc.id)"
+              >
+              <span class="broker-badge" [attr.data-broker]="acc.broker.toLowerCase()">{{ acc.broker }}</span>
+              <span class="acc-name">{{ acc.name }}</span>
+            </label>
+          }
+
+          <div class="acc-manage-row">
+            <a routerLink="/accounts" (click)="panelOpen = false">
+              <i class="pi pi-cog"></i> Manage accounts
+            </a>
+          </div>
         </div>
-      </ng-template>
-      <ng-template #item let-account>
-        <div class="account-option">
-          <span class="broker-badge" [attr.data-broker]="account.broker.toLowerCase()">
-            {{account.broker}}
-          </span>
-          <span>{{account.name}}</span>
-        </div>
-      </ng-template>
-    </p-select>
+      }
+    </div>
   </div>
 
   <!-- Navigation -->

@@ -38,7 +38,7 @@ export class StrategyPickerComponent implements OnInit, OnChanges {
       this.tradeService.updateStrategyIds(this.tradeId, ids).subscribe();
     });
 
-    this.strategyService.getAll(this.accountId).subscribe({
+    this.strategyService.getAll().subscribe({
       next: items => {
         this.strategies.set(items);
         this.rebuildSelected();
