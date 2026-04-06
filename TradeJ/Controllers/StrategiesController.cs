@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TradeJ.Data;
@@ -94,6 +95,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
 
     // GET /api/strategies/{id}/image
     [HttpGet("{id:int}/image")]
+    [AllowAnonymous]
     public async Task<IActionResult> GetImage(int id)
     {
         var s = await db.Strategies
