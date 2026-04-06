@@ -1,4 +1,7 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using TradeJ.Data;
 using TradeJ.Services;
 
@@ -27,6 +30,27 @@ public class Program
         builder.Services.AddHostedService(sp => sp.GetRequiredService<CTraderAutoSyncService>());
         builder.Services.AddHttpClient();
 
+        // JWT Authentication
+        var jwtKey = builder.Configuration["Jwt:Key"]
+            ?? "dev-only-insecure-key-change-in-production-32ch";
+
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateIssuer = true,
+                    ValidIssuer = builder.Configuration["Jwt:Issuer"] ?? "tradej",
+                    ValidateAudience = true,
+                    ValidAudience = builder.Configuration["Jwt:Audience"] ?? "tradej",
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+        builder.Services.AddAuthorization();
+
         // Controllers
         builder.Services.AddControllers();
 
@@ -39,7 +63,9 @@ public class Program
             options.AddPolicy("Angular", policy =>
                 policy.WithOrigins(
                         "http://localhost:4200",
-                        "https://localhost:4200")
+                        "https://localhost:4200",
+                        "http://localhost:7157",
+                        "https://localhost:7157")
                       .AllowAnyHeader()
                       .AllowAnyMethod());
         });
@@ -67,12 +93,9 @@ public class Program
         }
 
         app.UseCors("Angular");
-        // Only redirect to HTTPS when running outside a container (dev / IIS).
-        // In Docker the container speaks plain HTTP; TLS is terminated by the router/nginx.
-        if (!app.Environment.IsProduction())
-            app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
-        app.MapControllers();
+        app.MapControllers().RequireAuthorization();
 
         await app.RunAsync();
     }

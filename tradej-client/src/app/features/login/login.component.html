@@ -1,0 +1,33 @@
+<div class="login-wrapper">
+  <p-card>
+    <div class="login-header">
+      <h2>TradeJ</h2>
+      <p>Sign in to continue</p>
+    </div>
+
+    <form (ngSubmit)="submit()">
+      <div class="field">
+        <label for="username">Username</label>
+        <input pInputText id="username" [(ngModel)]="username" name="username" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <p-password
+          inputId="password"
+          [(ngModel)]="password"
+          name="password"
+          [feedback]="false"
+          [toggleMask]="true"
+          styleClass="w-full"
+        />
+      </div>
+
+      @if (error) {
+        <div class="error-msg">{{ error }}</div>
+      }
+
+      <p-button type="submit" label="Sign In" styleClass="w-full" [loading]="loading" />
+    </form>
+  </p-card>
+</div>
