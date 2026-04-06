@@ -51,7 +51,7 @@ public class Program
         {
             var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
             await ctx.Database.MigrateAsync();
-        }
+        } 
 
         // Seed default app settings (singleton, resolved from root provider)
         await app.Services.GetRequiredService<AppSettingsService>().InitializeAsync();
