@@ -7,7 +7,6 @@ export interface Tag {
 
 export interface TagCategory {
   id: number;
-  accountId: number;
   name: string;
   color: string;
   sortOrder: number;

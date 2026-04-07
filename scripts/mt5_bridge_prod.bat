@@ -1,0 +1,2 @@
+@echo off
+"C:\Users\maida\AppData\Local\Python\pythoncore-3.14-64\pythonw.exe" -u "%~dp0mt5_bridge_prod.py" %* >> "E:\projects\TradeJ\scripts\mt5_bridge.log" 2>&1 >> "E:\projects\TradeJ\scripts\mt5_bridge.log" 2>&1

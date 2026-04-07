@@ -7,12 +7,12 @@ export class TagService {
   private http = inject(HttpClient);
   private readonly api = '/api/tagcategories';
 
-  getCategories(accountId: number) {
-    return this.http.get<TagCategory[]>(`${this.api}?accountId=${accountId}`);
+  getCategories() {
+    return this.http.get<TagCategory[]>(this.api);
   }
 
-  createCategory(accountId: number, name: string, color: string) {
-    return this.http.post<TagCategory>(this.api, { accountId, name, color });
+  createCategory(name: string, color: string) {
+    return this.http.post<TagCategory>(this.api, { name, color });
   }
 
   updateCategory(id: number, name: string, color: string, sortOrder: number) {

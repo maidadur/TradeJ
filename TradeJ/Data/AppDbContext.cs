@@ -42,13 +42,7 @@ public class AppDbContext : DbContext
             entity.Property(t => t.NetPnL).HasPrecision(18, 2);
         });
 
-        modelBuilder.Entity<TagCategory>(entity =>
-        {
-            entity.HasOne(c => c.Account)
-                .WithMany()
-                .HasForeignKey(c => c.AccountId)
-                .OnDelete(DeleteBehavior.Cascade);
-        });
+
 
         modelBuilder.Entity<Tag>(entity =>
         {

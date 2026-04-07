@@ -70,7 +70,7 @@ export class TagPickerComponent implements OnInit, OnChanges, OnDestroy {
 
   loadCategories() {
     this.loading.set(true);
-    this.tagService.getCategories(this.accountId).subscribe({
+    this.tagService.getCategories().subscribe({
       next: cats => {
         this.categories.set(cats);
         this.rebuildSelected();
@@ -173,7 +173,7 @@ export class TagPickerComponent implements OnInit, OnChanges, OnDestroy {
   addCategory() {
     const name = this.newCatName.trim();
     if (!name) return;
-    this.tagService.createCategory(this.accountId, name, this.newCatColor).subscribe(cat => {
+    this.tagService.createCategory(name, this.newCatColor).subscribe(cat => {
       cat.tags = cat.tags ?? [];
       this.categories.update(cats => [...cats, cat]);
       this.selectedByCategory.set(cat.id, []);

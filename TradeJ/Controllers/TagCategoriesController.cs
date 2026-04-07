@@ -11,10 +11,9 @@ namespace TradeJ.Controllers;
 public class TagCategoriesController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<TagCategoryDto>>> GetAll([FromQuery] int accountId)
+    public async Task<ActionResult<List<TagCategoryDto>>> GetAll()
     {
         var categories = await db.TagCategories
-            .Where(c => c.AccountId == accountId)
             .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
             .Include(c => c.Tags)
                 .ThenInclude(t => t.TradeTags)
@@ -28,15 +27,14 @@ public class TagCategoriesController(AppDbContext db) : ControllerBase
     {
         var category = new TagCategory
         {
-            AccountId = dto.AccountId,
             Name = dto.Name,
             Color = dto.Color,
-            SortOrder = await db.TagCategories.Where(c => c.AccountId == dto.AccountId).CountAsync()
+            SortOrder = await db.TagCategories.CountAsync()
         };
         db.TagCategories.Add(category);
         await db.SaveChangesAsync();
         await db.Entry(category).Collection(c => c.Tags).LoadAsync();
-        return CreatedAtAction(nameof(GetAll), new { accountId = dto.AccountId }, MapCategory(category));
+        return CreatedAtAction(nameof(GetAll), MapCategory(category));
     }
 
     [HttpPut("{id:int}")]
@@ -99,7 +97,6 @@ public class TagCategoriesController(AppDbContext db) : ControllerBase
 
     private static TagCategoryDto MapCategory(TagCategory c) => new(
         c.Id,
-        c.AccountId,
         c.Name,
         c.Color,
         c.SortOrder,
