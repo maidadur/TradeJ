@@ -18,7 +18,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
     private const string DemoWs = "wss://demo.ctraderapi.com:5035";
 
     // cTrader token endpoint
-    private const string TokenEndpoint = "https://connect.spotware.com/apps/token";
+    private const string TokenEndpoint = "https://openapi.ctrader.com/apps/token";
 
     // ProtoOAPayloadType values used here
     private enum PT : uint
@@ -43,11 +43,11 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
     {
         var clientId    = RequireConfig("CTrader:ClientId");
         var redirectUri = RequireConfig("CTrader:RedirectUri");
-        return $"https://connect.spotware.com/apps/authorize" +
-               $"?response_type=code" +
-               $"&client_id={Uri.EscapeDataString(clientId)}" +
+        return $"https://id.ctrader.com/my/settings/openapi/grantingaccess/" +
+               $"?client_id={Uri.EscapeDataString(clientId)}" +
                $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
-               $"&scope=trading";
+               $"&scope=trading" +
+               $"&product=web";
     }
 
     /// <summary>Exchange auth code for an access token then list authorised accounts.</summary>
@@ -59,16 +59,13 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
 
         // 1. Exchange code → access token + refresh token
         using var client = http.CreateClient();
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"]    = "authorization_code",
-            ["code"]          = code,
-            ["redirect_uri"]  = redirectUri,
-            ["client_id"]     = clientId,
-            ["client_secret"] = clientSecret,
-        });
+        var tokenUrl = $"{TokenEndpoint}?grant_type=authorization_code" +
+                       $"&code={Uri.EscapeDataString(code)}" +
+                       $"&redirect_uri={Uri.EscapeDataString(redirectUri)}" +
+                       $"&client_id={Uri.EscapeDataString(clientId)}" +
+                       $"&client_secret={Uri.EscapeDataString(clientSecret)}";
 
-        var tokenRes = await client.PostAsync(TokenEndpoint, form);
+        var tokenRes = await client.GetAsync(tokenUrl);
         if (!tokenRes.IsSuccessStatusCode)
         {
             var body = await tokenRes.Content.ReadAsStringAsync();
@@ -76,9 +73,9 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         }
 
         var tokenJson    = await tokenRes.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-        var accessToken  = tokenJson.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("access_token missing from response");
-        var refreshToken = tokenJson.TryGetProperty("refresh_token", out var rt) ? rt.GetString() ?? "" : "";
+        var accessToken  = tokenJson.GetProperty("accessToken").GetString()
+            ?? throw new InvalidOperationException("accessToken missing from response");
+        var refreshToken = tokenJson.TryGetProperty("refreshToken", out var rt) ? rt.GetString() ?? "" : "";
 
         // 2. List accounts via cTrader Open API
         using var ws = await ConnectAndAppAuthAsync();
@@ -97,15 +94,12 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         var clientSecret = RequireConfig("CTrader:ClientSecret");
 
         using var client = http.CreateClient();
-        var form = new FormUrlEncodedContent(new Dictionary<string, string>
-        {
-            ["grant_type"]    = "refresh_token",
-            ["refresh_token"] = refreshToken,
-            ["client_id"]     = clientId,
-            ["client_secret"] = clientSecret,
-        });
+        var refreshUrl = $"{TokenEndpoint}?grant_type=refresh_token" +
+                         $"&refresh_token={Uri.EscapeDataString(refreshToken)}" +
+                         $"&client_id={Uri.EscapeDataString(clientId)}" +
+                         $"&client_secret={Uri.EscapeDataString(clientSecret)}";
 
-        var tokenRes = await client.PostAsync(TokenEndpoint, form);
+        var tokenRes = await client.GetAsync(refreshUrl);
         if (!tokenRes.IsSuccessStatusCode)
         {
             var body = await tokenRes.Content.ReadAsStringAsync();
@@ -113,8 +107,8 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         }
 
         var tokenJson   = await tokenRes.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-        return tokenJson.GetProperty("access_token").GetString()
-            ?? throw new InvalidOperationException("access_token missing from refresh response");
+        return tokenJson.GetProperty("accessToken").GetString()
+            ?? throw new InvalidOperationException("accessToken missing from refresh response");
     }
 
     /// <summary>Persist cTrader link credentials on the TradeJ account for auto-sync.</summary>
