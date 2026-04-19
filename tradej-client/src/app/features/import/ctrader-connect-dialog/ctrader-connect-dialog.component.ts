@@ -203,7 +203,7 @@ export class CTraderConnectDialogComponent implements OnDestroy {
     importNext(0);
   }
 
-  private updateRow(ctidId: number, fn: (r: AccountRow) => AccountRow): void {
+  updateRow(ctidId: number, fn: (r: AccountRow) => AccountRow): void {
     this.accountRows.update(rows => rows.map(r =>
       r.ctraderAccount.ctidTraderAccountId === ctidId ? fn(r) : r
     ));

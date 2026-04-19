@@ -60,7 +60,8 @@
 
           <!-- Checkbox + account label -->
           <div class="ct-row-header">
-            <p-checkbox [(ngModel)]="row.selected" [binary]="true" />
+            <p-checkbox [ngModel]="row.selected" [binary]="true"
+              (ngModelChange)="updateRow(row.ctraderAccount.ctidTraderAccountId, r => ({ ...r, selected: $event }))" />
             <div class="ct-row-id">
               <span class="ct-row-login">{{ row.ctraderAccount.traderLogin }}</span>
               <span class="ct-row-broker">{{ row.ctraderAccount.brokerName }}</span>
@@ -90,7 +91,8 @@
                 <label>TradeJ Account</label>
                 <p-select
                   [options]="tradeJAccounts()"
-                  [(ngModel)]="row.tradeJAccount"
+                  [ngModel]="row.tradeJAccount"
+                  (ngModelChange)="updateRow(row.ctraderAccount.ctidTraderAccountId, r => ({ ...r, tradeJAccount: $event }))"
                   [optionLabel]="'name'"
                   placeholder="Select account…"
                   [style]="{ width: '100%' }"
