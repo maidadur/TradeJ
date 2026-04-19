@@ -30,10 +30,10 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         AccountAuthRes   = 2103,
         GetAccountsReq   = 2149,
         GetAccountsRes   = 2150,
-        DealListReq      = 2161,
-        DealListRes      = 2162,
-        SymbolsListReq   = 2115,
-        SymbolsListRes   = 2116,
+        DealListReq      = 2133,
+        DealListRes      = 2134,
+        SymbolsListReq   = 2114,
+        SymbolsListRes   = 2115,
         ErrorRes         = 2142,
     }
 
@@ -79,7 +79,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
 
         // 2. List accounts via cTrader Open API
         using var ws = await ConnectAndAppAuthAsync();
-        var payload = Encode(ms => WriteStr(ms, 1, accessToken));
+        var payload = Encode(ms => WriteStr(ms, 2, accessToken));
         await SendAsync(ws, (uint)PT.GetAccountsReq, payload);
         var res = await ReceiveUntilAsync(ws, (uint)PT.GetAccountsRes);
 
@@ -249,7 +249,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         var clientId     = RequireConfig("CTrader:ClientId");
         var clientSecret = RequireConfig("CTrader:ClientSecret");
 
-        var payload = Encode(ms => { WriteStr(ms, 1, clientId); WriteStr(ms, 2, clientSecret); });
+        var payload = Encode(ms => { WriteStr(ms, 2, clientId); WriteStr(ms, 3, clientSecret); });
         await SendAsync(ws, (uint)PT.AppAuthReq, payload);
         await ReceiveUntilAsync(ws, (uint)PT.AppAuthRes);
 
@@ -258,14 +258,14 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
 
     private static async Task AccountAuthAsync(ClientWebSocket ws, long accountId, string accessToken)
     {
-        var payload = Encode(ms => { WriteI64(ms, 1, accountId); WriteStr(ms, 2, accessToken); });
+        var payload = Encode(ms => { WriteI64(ms, 2, accountId); WriteStr(ms, 3, accessToken); });
         await SendAsync(ws, (uint)PT.AccountAuthReq, payload);
         await ReceiveUntilAsync(ws, (uint)PT.AccountAuthRes);
     }
 
     private static async Task<Dictionary<long, string>> GetSymbolMapAsync(ClientWebSocket ws, long accountId)
     {
-        var payload = Encode(ms => WriteI64(ms, 1, accountId));
+        var payload = Encode(ms => WriteI64(ms, 2, accountId));
         await SendAsync(ws, (uint)PT.SymbolsListReq, payload);
         var res = await ReceiveUntilAsync(ws, (uint)PT.SymbolsListRes, 30_000);
         return ParseSymbolMap(res);
@@ -284,10 +284,10 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         {
             var payload = Encode(ms =>
             {
-                WriteI64(ms, 1, accountId);
-                WriteI64(ms, 2, cursor);
-                WriteI64(ms, 3, toMs);
-                WriteI32(ms, 4, PageSize);
+                WriteI64(ms, 2, accountId);
+                WriteI64(ms, 3, cursor);
+                WriteI64(ms, 4, toMs);
+                WriteI32(ms, 5, PageSize);
             });
             await SendAsync(ws, (uint)PT.DealListReq, payload);
             var res = await ReceiveUntilAsync(ws, (uint)PT.DealListRes, 30_000);
@@ -395,7 +395,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         while (pos < data.Length)
         {
             var tag = ReadVarU32(data, ref pos);
-            if ((tag >> 3) == 2) result.Add(ParseAccount(ReadLD(data, ref pos)));
+            if ((tag >> 3) == 4) result.Add(ParseAccount(ReadLD(data, ref pos)));
             else Skip(data, ref pos, tag & 7);
         }
         return result;
@@ -413,7 +413,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
                 case 1: id     = (long)ReadVarU64(data, ref pos); break;
                 case 2: isLive = ReadVarU32(data, ref pos) != 0; break;
                 case 3: login  = (long)ReadVarU64(data, ref pos); break;
-                case 9: broker = Encoding.UTF8.GetString(ReadLD(data, ref pos)); break;
+                case 6: broker = Encoding.UTF8.GetString(ReadLD(data, ref pos)); break;
                 default: Skip(data, ref pos, tag & 7); break;
             }
         }
@@ -428,7 +428,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         {
             var tag  = ReadVarU32(data, ref pos);
             var wire = tag & 7;
-            if ((tag >> 3) == 2 && wire == 2)
+            if ((tag >> 3) == 3 && wire == 2)
             {
                 var (id, name) = ParseLightSymbol(ReadLD(data, ref pos));
                 if (id > 0 && !string.IsNullOrEmpty(name)) map[id] = name;
@@ -464,9 +464,9 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
         {
             var tag  = ReadVarU32(data, ref pos);
             var wire = tag & 7;
-            if ((tag >> 3) == 2 && wire == 2)
+            if ((tag >> 3) == 3 && wire == 2)
                 deals.Add(ParseDeal(ReadLD(data, ref pos)));
-            else if ((tag >> 3) == 3 && wire == 0)
+            else if ((tag >> 3) == 4 && wire == 0)
                 hasMore = ReadVarU32(data, ref pos) != 0;
             else
                 Skip(data, ref pos, wire);
@@ -486,14 +486,14 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
             {
                 case 1:  d.DealId             = (long)ReadVarU64(data, ref pos); break;
                 case 3:  d.PositionId         = (long)ReadVarU64(data, ref pos); break;
-                case 4:  d.SymbolId           = (long)ReadVarU64(data, ref pos); break;
-                case 5:  d.CreateTimestamp    = (long)ReadVarU64(data, ref pos); break;
-                case 6:  d.ExecutionTimestamp = (long)ReadVarU64(data, ref pos); break;
-                case 7:  d.TradeSide          = (int)ReadVarU32(data, ref pos); break;
-                case 8:  d.FilledVolume       = (long)ReadVarU64(data, ref pos); break;
-                case 9:  d.ExecutionPrice     = ReadDouble(data, ref pos); break;
-                case 13: d.DealStatus         = (int)ReadVarU32(data, ref pos); break;
-                case 15: d.CloseDetailBytes   = ReadLD(data, ref pos); ParseCloseDetail(d); break;
+                case 5:  d.FilledVolume       = (long)ReadVarU64(data, ref pos); break;
+                case 6:  d.SymbolId           = (long)ReadVarU64(data, ref pos); break;
+                case 7:  d.CreateTimestamp    = (long)ReadVarU64(data, ref pos); break;
+                case 8:  d.ExecutionTimestamp = (long)ReadVarU64(data, ref pos); break;
+                case 10: d.ExecutionPrice     = ReadDouble(data, ref pos); break;
+                case 11: d.TradeSide          = (int)ReadVarU32(data, ref pos); break;
+                case 12: d.DealStatus         = (int)ReadVarU32(data, ref pos); break;
+                case 16: d.CloseDetailBytes   = ReadLD(data, ref pos); ParseCloseDetail(d); break;
                 default: Skip(data, ref pos, wire); break;
             }
         }
@@ -515,7 +515,7 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
                 case 3:  d.CloseSwap       = (long)ReadVarU64(data, ref pos); break;
                 case 4:  d.CloseCommission = (long)ReadVarU64(data, ref pos); break;
                 case 7:  d.ClosedVolume    = (long)ReadVarU64(data, ref pos); break;
-                case 10: d.MoneyDigits     = (int)ReadVarU32(data, ref pos); break;
+                case 9:  d.MoneyDigits     = (int)ReadVarU32(data, ref pos); break;
                 default: Skip(data, ref pos, wire); break;
             }
         }
@@ -524,13 +524,21 @@ public class CTraderApiService(IConfiguration config, AppDbContext db, IHttpClie
     private static string ParseErrorMsg(byte[] data)
     {
         int pos = 0;
+        string? errorCode = null;
+        string? description = null;
         while (pos < data.Length)
         {
-            var tag = ReadVarU32(data, ref pos);
-            if ((tag >> 3) == 2) return Encoding.UTF8.GetString(ReadLD(data, ref pos));
-            Skip(data, ref pos, tag & 7);
+            var tag  = ReadVarU32(data, ref pos);
+            var wire = tag & 7;
+            switch (tag >> 3)
+            {
+                case 3: errorCode   = Encoding.UTF8.GetString(ReadLD(data, ref pos)); break;
+                case 4: description = Encoding.UTF8.GetString(ReadLD(data, ref pos)); break;
+                default: Skip(data, ref pos, wire); break;
+            }
         }
-        return "Unknown cTrader API error";
+        if (errorCode != null && description != null) return $"{errorCode}: {description}";
+        return errorCode ?? description ?? "Unknown cTrader API error";
     }
 
     // ── Low-level protobuf read helpers ───────────────────────────────────────
