@@ -33,7 +33,7 @@ public sealed class MT5AutoSyncService(
         while (!stoppingToken.IsCancellationRequested)
         {
             if (appSettings.Mt5SyncEnabled)
-                await SyncAllAccountsAsync(lookbackDays, stoppingToken);
+                await SyncAllAccountsAsync(lookbackDays, null, stoppingToken);
             else
                 logger.LogDebug("MT5 auto-sync is disabled, skipping tick.");
 
@@ -45,21 +45,32 @@ public sealed class MT5AutoSyncService(
     public Task TriggerSyncAsync(CancellationToken ct = default)
     {
         var lookbackDays = config.GetValue("AutoSync:LookbackDays", 7);
-        return SyncAllAccountsAsync(lookbackDays, ct);
+        return SyncAllAccountsAsync(lookbackDays, null, ct);
     }
 
-    private async Task SyncAllAccountsAsync(int lookbackDays, CancellationToken ct)
+    /// <summary>Manually trigger a sync cycle for specific account IDs only.</summary>
+    public Task TriggerSyncForAccountsAsync(int[] accountIds, CancellationToken ct = default)
+    {
+        var lookbackDays = config.GetValue("AutoSync:LookbackDays", 7);
+        return SyncAllAccountsAsync(lookbackDays, accountIds, ct);
+    }
+
+    private async Task SyncAllAccountsAsync(int lookbackDays, int[]? filterIds, CancellationToken ct)
     {
         // Each tick gets its own DI scope so EF Core and HttpClient are fresh.
         await using var scope = scopeFactory.CreateAsyncScope();
         var db      = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var bridge  = scope.ServiceProvider.GetRequiredService<MT5BridgeImportService>();
 
-        var accounts = await db.Accounts
+        var query = db.Accounts
             .Where(a => a.IsActive
                      && a.MT5Server != null && a.MT5Server != ""
-                     && a.MT5InvestorPassword != null && a.MT5InvestorPassword != "")
-            .ToListAsync(ct);
+                     && a.MT5InvestorPassword != null && a.MT5InvestorPassword != "");
+
+        if (filterIds != null && filterIds.Length > 0)
+            query = query.Where(a => filterIds.Contains(a.Id));
+
+        var accounts = await query.ToListAsync(ct);
 
         if (accounts.Count == 0)
         {

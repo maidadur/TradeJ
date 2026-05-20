@@ -317,12 +317,14 @@ export class DashboardComponent implements OnInit {
 
   resyncAll(): void {
     if (this.syncing()) return;
+    const ids = this.accountIds();
+    if (!ids.length) return;
     this.syncing.set(true);
-    this.http.post<void>('/api/sync/all', null).subscribe({
+    this.http.post<void>('/api/sync/selected', ids).subscribe({
       next: () => {
         this.syncing.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: 'All accounts have been resynced.', life: 3000 });
-        if (this.accountIds().length) this.load();
+        this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: 'Selected accounts have been resynced.', life: 3000 });
+        this.load();
       },
       error: () => {
         this.syncing.set(false);

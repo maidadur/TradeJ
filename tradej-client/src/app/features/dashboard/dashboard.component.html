@@ -11,6 +11,7 @@
         severity="secondary"
         size="small"
         [loading]="syncing()"
+        [disabled]="!accountIds().length"
         (onClick)="resyncAll()"
       />
       <p-select
