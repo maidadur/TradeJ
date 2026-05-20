@@ -320,15 +320,20 @@ export class DashboardComponent implements OnInit {
     const ids = this.accountIds();
     if (!ids.length) return;
     this.syncing.set(true);
-    this.http.post<void>('/api/sync/selected', ids).subscribe({
-      next: () => {
+    this.http.post<{ imported: number; skipped: number; errors: number; errorMessages: string[] }>('/api/sync/selected', ids).subscribe({
+      next: (result) => {
         this.syncing.set(false);
-        this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: 'Selected accounts have been resynced.', life: 3000 });
+        if (result.errors > 0) {
+          this.messageService.add({ severity: 'warn', summary: 'Sync completed with errors', detail: result.errorMessages[0] ?? 'Some accounts failed to sync.', life: 7000 });
+        } else {
+          this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: `Imported ${result.imported}, skipped ${result.skipped}.`, life: 4000 });
+        }
         this.load();
       },
-      error: () => {
+      error: (err) => {
         this.syncing.set(false);
-        this.messageService.add({ severity: 'error', summary: 'Sync failed', detail: 'Could not reach the sync service. Check that the MT5 bridge is running.', life: 5000 });
+        const detail = err.error?.message ?? err.error ?? 'Could not reach the sync service.';
+        this.messageService.add({ severity: 'error', summary: 'Sync failed', detail, life: 7000 });
       }
     });
   }
