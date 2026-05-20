@@ -49,9 +49,9 @@ public sealed class MT5AutoSyncService(
     }
 
     /// <summary>Manually trigger a sync cycle for specific account IDs only.</summary>
-    public Task TriggerSyncForAccountsAsync(int[] accountIds, CancellationToken ct = default)
+    public Task TriggerSyncForAccountsAsync(int[] accountIds, int? lookbackDaysOverride = null, CancellationToken ct = default)
     {
-        var lookbackDays = config.GetValue("AutoSync:LookbackDays", 7);
+        var lookbackDays = lookbackDaysOverride ?? config.GetValue("AutoSync:LookbackDays", 7);
         return SyncAllAccountsAsync(lookbackDays, accountIds, ct);
     }
 

@@ -20,7 +20,7 @@ public class SyncController(
         return Ok();
     }
 
-    /// <summary>Sync only the specified account IDs.</summary>
+    /// <summary>Sync only the specified account IDs, using a 30-day look-back for manual triggers.</summary>
     [HttpPost("selected")]
     public async Task<IActionResult> SyncSelected([FromBody] int[] accountIds, CancellationToken ct)
     {
@@ -28,8 +28,8 @@ public class SyncController(
             return BadRequest("No account IDs provided.");
 
         logger.LogInformation("Manual sync triggered for {Count} selected account(s).", accountIds.Length);
-        await mt5Sync.TriggerSyncForAccountsAsync(accountIds, ct);
-        await ctraderSync.TriggerSyncForAccountsAsync(accountIds, ct);
+        await mt5Sync.TriggerSyncForAccountsAsync(accountIds, 30, ct);
+        await ctraderSync.TriggerSyncForAccountsAsync(accountIds, 30, ct);
         return Ok();
     }
 }
