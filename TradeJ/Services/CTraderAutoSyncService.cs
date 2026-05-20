@@ -30,7 +30,7 @@ public sealed class CTraderAutoSyncService(
         while (!stoppingToken.IsCancellationRequested)
         {
             if (appSettings.CTraderSyncEnabled)
-                await SyncAllAccountsAsync(lookbackDays, stoppingToken);
+                await SyncAllAccountsAsync(lookbackDays, null, stoppingToken);
             else
                 logger.LogDebug("cTrader auto-sync is disabled, skipping tick.");
 
