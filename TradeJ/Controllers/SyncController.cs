@@ -43,8 +43,8 @@ public class SyncController(
             .Where(a => a.IsActive && accountIds.Contains(a.Id))
             .ToListAsync(ct);
 
-        var dateTo   = DateTime.UtcNow;
-        var dateFrom = dateTo.AddDays(-ManualLookbackDays);
+        var dateTo   = DateTime.UtcNow.AddDays(14);
+        var dateFrom = DateTime.UtcNow.AddDays(-ManualLookbackDays);
 
         int totalImported = 0, totalSkipped = 0, totalErrors = 0;
         var messages = new List<string>();
