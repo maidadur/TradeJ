@@ -14,7 +14,7 @@ public class SyncController(
     AppDbContext db,
     ILogger<SyncController> logger) : ControllerBase
 {
-    private const int ManualLookbackDays = 30;
+    private const int ManualLookbackDays = 365;
 
     /// <summary>Manually trigger a full sync of all MT5 and cTrader accounts immediately.</summary>
     [HttpPost("all")]

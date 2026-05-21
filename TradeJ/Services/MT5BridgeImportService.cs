@@ -79,10 +79,43 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                 var entryDeals = group.Where(d => d.Entry == "DEAL_ENTRY_IN").OrderBy(d => d.Time).ToList();
                 var exitDeals  = group.Where(d => d.Entry is "DEAL_ENTRY_OUT" or "DEAL_ENTRY_INOUT").OrderBy(d => d.Time).ToList();
 
-                if (entryDeals.Count == 0) { skipped++; continue; }
+                var lastExit      = exitDeals.LastOrDefault();
+                var totalExitVol  = exitDeals.Sum(d => d.Volume);
+                var exitPrice     = totalExitVol > 0 && lastExit is not null
+                    ? exitDeals.Sum(d => d.Price * d.Volume) / totalExitVol
+                    : lastExit?.Price;
+                var commission    = group.Sum(d => d.Commission);
+                var swap          = group.Sum(d => d.Swap);
+                var grossPnL      = exitDeals.Sum(d => d.Profit);
+                var netPnL        = grossPnL + commission + swap;
+
+                var existing = await db.Trades.FirstOrDefaultAsync(
+                    t => t.AccountId == accountId && t.BrokerTradeId == positionId);
+
+                if (entryDeals.Count == 0)
+                {
+                    // Entry deal is outside the lookback window. If this position already exists
+                    // as an open trade, update it with the close info. Otherwise skip — we cannot
+                    // create a new trade without knowing the entry price/time.
+                    if (existing is not null && exitDeals.Count > 0)
+                    {
+                        existing.ExitTime   = lastExit!.Time;
+                        existing.ExitPrice  = exitPrice;
+                        existing.GrossPnL   = grossPnL;
+                        existing.Commission = commission;
+                        existing.Swap       = swap;
+                        existing.NetPnL     = netPnL;
+                        existing.Status     = TradeStatus.Closed;
+                        imported++;
+                    }
+                    else
+                    {
+                        skipped++;
+                    }
+                    continue;
+                }
 
                 var firstEntry = entryDeals.First();
-                var lastExit   = exitDeals.LastOrDefault();
                 var direction  = firstEntry.Type == "DEAL_TYPE_BUY" ? TradeDirection.Long : TradeDirection.Short;
 
                 // Aggregate all deals — handles partial closes and scale-ins correctly
@@ -90,19 +123,7 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                 var entryPrice    = totalEntryVol > 0
                     ? entryDeals.Sum(d => d.Price * d.Volume) / totalEntryVol
                     : firstEntry.Price;
-                var totalExitVol  = exitDeals.Sum(d => d.Volume);
-                var exitPrice     = totalExitVol > 0 && lastExit is not null
-                    ? exitDeals.Sum(d => d.Price * d.Volume) / totalExitVol
-                    : lastExit?.Price;
-
-                var commission = group.Sum(d => d.Commission);
-                var swap       = group.Sum(d => d.Swap);
-                var grossPnL   = exitDeals.Sum(d => d.Profit);
-                var netPnL     = grossPnL + commission + swap;
                 var status     = lastExit is not null ? TradeStatus.Closed : TradeStatus.Open;
-
-                var existing = await db.Trades.FirstOrDefaultAsync(
-                    t => t.AccountId == accountId && t.BrokerTradeId == positionId);
 
                 if (existing is not null)
                 {
