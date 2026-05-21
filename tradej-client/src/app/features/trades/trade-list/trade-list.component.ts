@@ -133,4 +133,33 @@ export class TradeListComponent implements OnInit {
     const map = this.strategyMap();
     return ids.map(id => map.get(id) ?? '?').join(', ');
   }
+
+  exportCsv(): void {
+    const ids = this.accountIds();
+    if (!ids.length) return;
+    const f = {
+      accountIds: ids,
+      symbol: this.filter.symbol,
+      direction: this.filter.direction,
+      status: this.filter.status,
+      dateFrom: this.dateFrom?.toISOString().split('T')[0],
+      dateTo: this.dateTo?.toISOString().split('T')[0],
+      sortBy: this.filter.sortBy ?? 'entryTime',
+      sortDesc: this.filter.sortDesc ?? true,
+    };
+    this.tradeService.exportCsv(f).subscribe({
+      next: response => {
+        const blob = response.body!;
+        const disposition = response.headers.get('Content-Disposition') ?? '';
+        const match = disposition.match(/filename="?([^";\n]+)"?/);
+        const filename = match ? match[1] : 'trades.csv';
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  }
 }
