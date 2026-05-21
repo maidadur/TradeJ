@@ -26,8 +26,9 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
         var http = httpClientFactory.CreateClient();
         http.Timeout = TimeSpan.FromSeconds(120); // MT5 connection can be slow
 
-        var from = Uri.EscapeDataString(dateFrom.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss"));
-        var to   = Uri.EscapeDataString(dateTo.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss"));
+        // Append "Z" so Python's _parse_dt correctly treats these as UTC, not local time.
+        var from = Uri.EscapeDataString(dateFrom.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") + "Z");
+        var to   = Uri.EscapeDataString(dateTo.ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss") + "Z");
         var url  = $"{BridgeUrl}/deals?login={Uri.EscapeDataString(login)}&password={Uri.EscapeDataString(password)}&server={Uri.EscapeDataString(server)}&from={from}&to={to}";
 
         HttpResponseMessage response;
