@@ -140,6 +140,20 @@
                     {{ day.stats.profitFactor }}
                   </div>
                 </div>
+                <div class="stat-item" *ngIf="day.stats.avgRR != null">
+                  <div class="stat-label">Avg RR</div>
+                  <div class="stat-value">{{ day.stats.avgRR | number:'1.1-2' }}</div>
+                </div>
+                <div class="stat-item" *ngIf="day.stats.avgActualRR != null">
+                  <div class="stat-label">Avg Actual RR</div>
+                  <div class="stat-value" [class.positive]="day.stats.avgActualRR! > 0" [class.negative]="day.stats.avgActualRR! < 0">
+                    {{ day.stats.avgActualRR | number:'1.1-2' }}
+                  </div>
+                </div>
+                <div class="stat-item" *ngIf="day.stats.avgRiskPercent != null">
+                  <div class="stat-label">Avg Risk %</div>
+                  <div class="stat-value">{{ day.stats.avgRiskPercent | number:'1.1-2' }}%</div>
+                </div>
               </div>
 
               <!-- Mini chart -->
@@ -161,6 +175,9 @@
                     <th class="text-right">Commission</th>
                     <th class="text-right">Volume</th>
                     <th class="text-right">Duration</th>
+                    <th class="text-right">RR</th>
+                    <th class="text-right">Act. RR</th>
+                    <th class="text-right">Risk %</th>
                     <th>Tags</th>
                   </tr>
                 </thead>
@@ -190,6 +207,9 @@
                     </td>
                     <td class="text-right" style="color:#94a3b8">{{ t.volume }}</td>
                     <td class="text-right" style="color:#64748b">{{ formatDuration(t.durationMinutes) }}</td>
+                    <td class="text-right" style="color:#94a3b8">{{ t.rr != null ? (t.rr | number:'1.1-2') : '—' }}</td>
+                    <td class="text-right" [class.positive]="t.actualRR != null && t.actualRR > 0" [class.negative]="t.actualRR != null && t.actualRR < 0">{{ t.actualRR != null ? (t.actualRR | number:'1.1-2') : '—' }}</td>
+                    <td class="text-right" style="color:#94a3b8">{{ t.riskPercent != null ? (t.riskPercent | number:'1.1-2') + '%' : '—' }}</td>
                     <td>
                       <span *ngIf="t.tags" class="tag-pill">{{ t.tags }}</span>
                       <span *ngIf="!t.tags" style="color:#334155">—</span>
@@ -226,6 +246,9 @@
             <span class="stat-chip positive">{{ week.stats.winners }}W</span>
             <span class="stat-chip negative">{{ week.stats.losers }}L</span>
             <span class="stat-chip">Volume <strong>{{ week.stats.volume }}</strong></span>
+            <span class="stat-chip" *ngIf="week.stats.avgRR != null">Avg RR <strong>{{ week.stats.avgRR | number:'1.1-2' }}</strong></span>
+            <span class="stat-chip" *ngIf="week.stats.avgActualRR != null">Avg Act. RR <strong [class.positive]="week.stats.avgActualRR! > 0" [class.negative]="week.stats.avgActualRR! < 0">{{ week.stats.avgActualRR | number:'1.1-2' }}</strong></span>
+            <span class="stat-chip" *ngIf="week.stats.avgRiskPercent != null">Avg Risk <strong>{{ week.stats.avgRiskPercent | number:'1.1-2' }}%</strong></span>
           </div>
 
           <!-- Week body (expanded = show days) -->
@@ -316,6 +339,18 @@
                       <div class="stat-label">Profit Factor</div>
                       <div class="stat-value">{{ day.stats.profitFactor }}</div>
                     </div>
+                    <div class="stat-item" *ngIf="day.stats.avgRR != null">
+                      <div class="stat-label">Avg RR</div>
+                      <div class="stat-value">{{ day.stats.avgRR | number:'1.1-2' }}</div>
+                    </div>
+                    <div class="stat-item" *ngIf="day.stats.avgActualRR != null">
+                      <div class="stat-label">Avg Act. RR</div>
+                      <div class="stat-value" [class.positive]="day.stats.avgActualRR! > 0" [class.negative]="day.stats.avgActualRR! < 0">{{ day.stats.avgActualRR | number:'1.1-2' }}</div>
+                    </div>
+                    <div class="stat-item" *ngIf="day.stats.avgRiskPercent != null">
+                      <div class="stat-label">Avg Risk %</div>
+                      <div class="stat-value">{{ day.stats.avgRiskPercent | number:'1.1-2' }}%</div>
+                    </div>
                   </div>
                   <div class="day-chart" *ngIf="day.trades.length > 1">
                     <p-chart type="line" [data]="buildChartData(day)" [options]="chartOptions" height="100px" />
@@ -331,6 +366,9 @@
                         <th class="text-right">Net P&amp;L</th>
                         <th class="text-right">Volume</th>
                         <th class="text-right">Duration</th>
+                        <th class="text-right">RR</th>
+                        <th class="text-right">Act. RR</th>
+                        <th class="text-right">Risk %</th>
                         <th>Tags</th>
                       </tr>
                     </thead>
@@ -350,6 +388,9 @@
                         </td>
                         <td class="text-right" style="color:#94a3b8">{{ t.volume }}</td>
                         <td class="text-right" style="color:#64748b">{{ formatDuration(t.durationMinutes) }}</td>
+                        <td class="text-right" style="color:#94a3b8">{{ t.rr != null ? (t.rr | number:'1.1-2') : '—' }}</td>
+                        <td class="text-right" [class.positive]="t.actualRR != null && t.actualRR > 0" [class.negative]="t.actualRR != null && t.actualRR < 0">{{ t.actualRR != null ? (t.actualRR | number:'1.1-2') : '—' }}</td>
+                        <td class="text-right" style="color:#94a3b8">{{ t.riskPercent != null ? (t.riskPercent | number:'1.1-2') + '%' : '—' }}</td>
                         <td>
                           <span *ngIf="t.tags" class="tag-pill">{{ t.tags }}</span>
                           <span *ngIf="!t.tags" style="color:#334155">—</span>

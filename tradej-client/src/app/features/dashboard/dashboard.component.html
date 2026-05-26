@@ -119,6 +119,17 @@
         </div>
       </div>
 
+      <!-- Average Actual RR -->
+      @if (dashboard()!.summary.averageActualRR != null) {
+        <div class="stat-card">
+          <div class="label">Avg Actual RR</div>
+          <div class="value" [class]="pnlClass((dashboard()!.summary.averageActualRR ?? 0) - 1)">
+            {{dashboard()!.summary.averageActualRR! | number:'1.2-2'}}R
+          </div>
+          <div class="sub">across all closed trades with RR set</div>
+        </div>
+      }
+
     </div>
 
     <!-- ===== Big Calendar (Tradezella-style) ===== -->

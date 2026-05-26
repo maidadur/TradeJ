@@ -15,6 +15,7 @@ export interface DashboardSummary {
   largestWin: number;
   largestLoss: number;
   averageHoldingTimeMinutes: number;
+  averageActualRR?: number | null;
 }
 
 export interface MonthlyStats {

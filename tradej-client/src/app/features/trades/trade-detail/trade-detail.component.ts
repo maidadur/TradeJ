@@ -6,6 +6,7 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { EditorModule } from 'primeng/editor';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
@@ -20,7 +21,7 @@ import { TradingviewChartComponent } from './tradingview-chart/tradingview-chart
   standalone: true,
   imports: [
     CommonModule, FormsModule, RouterLink,
-    ButtonModule, TagModule, EditorModule, InputTextModule,
+    ButtonModule, TagModule, EditorModule, InputTextModule, InputNumberModule,
     ToastModule, TagPickerComponent, StrategyPickerComponent,
     TradingviewChartComponent
   ],
@@ -40,6 +41,12 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   saving = signal(false);
 
   notesHtml = '';
+
+  // Metrics editing state
+  metricsRR: number | null = null;
+  metricsActualRR: number | null = null;
+  metricsRiskPercent: number | null = null;
+  savingMetrics = signal(false);
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -65,6 +72,9 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
       next: trade => {
         this.trade.set(trade);
         this.notesHtml = trade.notes ?? '';
+        this.metricsRR = trade.rr ?? null;
+        this.metricsActualRR = trade.actualRR ?? null;
+        this.metricsRiskPercent = trade.riskPercent ?? null;
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -82,6 +92,25 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
     this.tradeService.updateNotes(t.id, html).subscribe({
       next: () => { this.saving.set(false); },
       error: () => this.saving.set(false)
+    });
+  }
+
+  saveMetrics(): void {
+    const t = this.trade();
+    if (!t) return;
+    this.savingMetrics.set(true);
+    this.tradeService.updateMetrics(t.id, this.metricsRR, this.metricsActualRR, this.metricsRiskPercent).subscribe({
+      next: () => {
+        this.savingMetrics.set(false);
+        this.trade.update(tr => tr ? {
+          ...tr,
+          rr: this.metricsRR,
+          actualRR: this.metricsActualRR,
+          riskPercent: this.metricsRiskPercent
+        } : tr);
+        this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Metrics updated', life: 2000 });
+      },
+      error: () => this.savingMetrics.set(false)
     });
   }
 

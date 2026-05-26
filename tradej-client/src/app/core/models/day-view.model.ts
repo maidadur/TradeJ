@@ -9,6 +9,9 @@ export interface DayStats {
   volume: number;
   winRate: number;
   profitFactor: number;
+  avgRR?: number | null;
+  avgActualRR?: number | null;
+  avgRiskPercent?: number | null;
 }
 
 export interface DayTradeItem {
@@ -27,6 +30,9 @@ export interface DayTradeItem {
   netPnL: number;
   tags?: string;
   durationMinutes: number;
+  rr?: number | null;
+  actualRR?: number | null;
+  riskPercent?: number | null;
 }
 
 export interface DayGroup {

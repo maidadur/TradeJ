@@ -29,7 +29,10 @@ public record DayStats(
     decimal Swap,
     decimal Volume,
     decimal WinRate,
-    decimal ProfitFactor);
+    decimal ProfitFactor,
+    decimal? AvgRR,
+    decimal? AvgActualRR,
+    decimal? AvgRiskPercent);
 
 public record DayTradeItem(
     int Id,
@@ -46,4 +49,7 @@ public record DayTradeItem(
     decimal Swap,
     decimal NetPnL,
     string? Tags,
-    int DurationMinutes);
+    int DurationMinutes,
+    decimal? RR,
+    decimal? ActualRR,
+    decimal? RiskPercent);

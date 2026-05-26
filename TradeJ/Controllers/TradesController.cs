@@ -252,6 +252,19 @@ public class TradesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{id:int}/metrics")]
+    public async Task<IActionResult> UpdateMetrics(int id, [FromBody] UpdateTradeMetricsDto dto)
+    {
+        var trade = await db.Trades.FindAsync(id);
+        if (trade is null) return NotFound();
+
+        trade.RR           = dto.RR;
+        trade.ActualRR     = dto.ActualRR;
+        trade.RiskPercent  = dto.RiskPercent;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     private static TradeDto MapToDto(Models.Trade t, string baseUrl) => new(
         t.Id,
         t.AccountId,
@@ -269,6 +282,9 @@ public class TradesController(AppDbContext db) : ControllerBase
         t.Commission,
         t.Swap,
         t.NetPnL,
+        t.RR,
+        t.ActualRR,
+        t.RiskPercent,
         t.Notes,
         t.Tags,
         t.ImportedAt,

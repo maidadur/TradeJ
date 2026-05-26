@@ -16,7 +16,8 @@ public record DashboardSummary(
     decimal MaxDrawdown,
     decimal LargestWin,
     decimal LargestLoss,
-    double AverageHoldingTimeMinutes);
+    double AverageHoldingTimeMinutes,
+    decimal? AverageActualRR);
 
 public record MonthlyStats(
     int Year,

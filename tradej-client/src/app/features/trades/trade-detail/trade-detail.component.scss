@@ -55,6 +55,45 @@
   margin-top: 1rem;
 }
 
+.metrics-section {
+  padding-top: 1rem;
+  border-top: 1px solid $border;
+  margin-top: 1rem;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.metric-label {
+  font-size: $size-xs;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: $text-dim;
+}
+
+:host ::ng-deep .metric-input {
+  width: 100%;
+  input {
+    width: 100%;
+    background: $bg-deeper !important;
+    border: 1px solid $border !important;
+    color: $text !important;
+    border-radius: 6px;
+    font-size: $size-sm;
+    padding: 0.4rem 0.6rem;
+  }
+}
+
 .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
 
 .save-indicator {

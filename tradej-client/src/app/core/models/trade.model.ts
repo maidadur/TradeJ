@@ -15,6 +15,9 @@ export interface Trade {
   commission: number;
   swap: number;
   netPnL: number;
+  rr?: number | null;
+  actualRR?: number | null;
+  riskPercent?: number | null;
   notes?: string;
   tags?: string;
   importedAt: string;

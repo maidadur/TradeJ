@@ -74,6 +74,13 @@ public class DayViewController(AppDbContext db) : ControllerBase
                     : 0m;
                 var weekNum   = ISOWeek.GetWeekOfYear(date);
 
+                var rrList         = tradeList.Where(t => t.RR.HasValue).Select(t => t.RR!.Value).ToList();
+                var actualRRList   = tradeList.Where(t => t.ActualRR.HasValue).Select(t => t.ActualRR!.Value).ToList();
+                var riskPctList    = tradeList.Where(t => t.RiskPercent.HasValue).Select(t => t.RiskPercent!.Value).ToList();
+                decimal? avgRR         = rrList.Count > 0 ? Math.Round(rrList.Average(), 2) : null;
+                decimal? avgActualRR   = actualRRList.Count > 0 ? Math.Round(actualRRList.Average(), 2) : null;
+                decimal? avgRiskPct    = riskPctList.Count > 0 ? Math.Round(riskPctList.Average(), 2) : null;
+
                 return new DayGroup(
                     Date:     date.ToString("yyyy-MM-dd"),
                     DayLabel: date.ToString("ddd, MMM dd, yyyy", CultureInfo.GetCultureInfo("en-US")),
@@ -88,7 +95,10 @@ public class DayViewController(AppDbContext db) : ControllerBase
                         Swap:        Math.Round(swap, 2),
                         Volume:      Math.Round(volume, 2),
                         WinRate:     winRate,
-                        ProfitFactor: pf),
+                        ProfitFactor: pf,
+                        AvgRR:        avgRR,
+                        AvgActualRR:  avgActualRR,
+                        AvgRiskPercent: avgRiskPct),
                     Trades: tradeList.Select(t => new DayTradeItem(
                         Id:              t.Id,
                         Symbol:          t.Symbol,
@@ -106,7 +116,10 @@ public class DayViewController(AppDbContext db) : ControllerBase
                         Tags:            t.Tags,
                         DurationMinutes: t.ExitTime.HasValue
                             ? (int)(t.ExitTime.Value - t.EntryTime).TotalMinutes
-                            : 0
+                            : 0,
+                        RR:          t.RR,
+                        ActualRR:    t.ActualRR,
+                        RiskPercent: t.RiskPercent
                     )).ToList(),
                     Note: notesMap.TryGetValue(dateOnly, out var noteContent) ? noteContent : null,
                     TagIds: tagsMap.TryGetValue(dateOnly, out var tagIds) ? tagIds : []

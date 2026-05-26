@@ -32,7 +32,7 @@ public class DashboardService(AppDbContext db)
     private static DashboardSummary ComputeSummary(List<Trade> trades)
     {
         if (trades.Count == 0)
-            return new DashboardSummary(0, 0, 0, 0, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0d);
+            return new DashboardSummary(0, 0, 0, 0, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0m, 0d, null);
 
         var wins       = trades.Where(t => t.NetPnL > 0).ToList();
         var losses     = trades.Where(t => t.NetPnL < 0).ToList();
@@ -53,6 +53,9 @@ public class DashboardService(AppDbContext db)
             .DefaultIfEmpty(0)
             .Average();
 
+        var actualRRValues = trades.Where(t => t.ActualRR.HasValue).Select(t => t.ActualRR!.Value).ToList();
+        decimal? avgActualRR = actualRRValues.Count > 0 ? Math.Round(actualRRValues.Average(), 2) : null;
+
         return new DashboardSummary(
             TotalTrades:            trades.Count,
             WinningTrades:          wins.Count,
@@ -69,7 +72,8 @@ public class DashboardService(AppDbContext db)
             MaxDrawdown:            maxDd,
             LargestWin:             trades.Max(t => t.NetPnL),
             LargestLoss:            trades.Min(t => t.NetPnL),
-            AverageHoldingTimeMinutes: Math.Round(avgHoldMins, 1)
+            AverageHoldingTimeMinutes: Math.Round(avgHoldMins, 1),
+            AverageActualRR:        avgActualRR
         );
     }
 

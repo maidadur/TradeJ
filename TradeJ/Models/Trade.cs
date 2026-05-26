@@ -26,6 +26,10 @@ public class Trade
     public decimal Swap { get; set; }
     public decimal NetPnL { get; set; }
 
+    public decimal? RR { get; set; }
+    public decimal? ActualRR { get; set; }
+    public decimal? RiskPercent { get; set; }
+
     public string? Notes { get; set; }
     public string? Tags { get; set; }
 

@@ -42,6 +42,10 @@ export class TradeService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/strategies`, { strategyIds });
   }
 
+  updateMetrics(id: number, rr: number | null, actualRR: number | null, riskPercent: number | null) {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/metrics`, { rr, actualRR, riskPercent });
+  }
+
   exportCsv(filter: Partial<TradeFilter> & { accountIds: number[] }) {
     let params = new HttpParams();
     for (const id of filter.accountIds) {

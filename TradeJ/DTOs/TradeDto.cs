@@ -17,11 +17,19 @@ public record TradeDto(
     decimal Commission,
     decimal Swap,
     decimal NetPnL,
+    decimal? RR,
+    decimal? ActualRR,
+    decimal? RiskPercent,
     string? Notes,
     string? Tags,
     DateTime ImportedAt,
     List<int> TagIds,
     List<int> StrategyIds);
+
+public record UpdateTradeMetricsDto(
+    decimal? RR,
+    decimal? ActualRR,
+    decimal? RiskPercent);
 
 public record UpdateTradeNotesDto(
     string? Notes,

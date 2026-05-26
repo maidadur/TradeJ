@@ -76,6 +76,50 @@
           </div>
         </div>
 
+        <!-- Metrics -->
+        <div class="metrics-section">
+          <div class="section-label">Metrics</div>
+          <div class="metrics-grid">
+            <div class="metric-item">
+              <label class="metric-label">RR (planned)</label>
+              <p-inputnumber
+                [(ngModel)]="metricsRR"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                placeholder="e.g. 2"
+                styleClass="metric-input"
+                (onBlur)="saveMetrics()"
+              />
+            </div>
+            <div class="metric-item">
+              <label class="metric-label">Actual RR</label>
+              <p-inputnumber
+                [(ngModel)]="metricsActualRR"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                placeholder="e.g. 1.5"
+                styleClass="metric-input"
+                (onBlur)="saveMetrics()"
+              />
+            </div>
+            <div class="metric-item">
+              <label class="metric-label">Risk %</label>
+              <p-inputnumber
+                [(ngModel)]="metricsRiskPercent"
+                [minFractionDigits]="0"
+                [maxFractionDigits]="2"
+                suffix="%"
+                placeholder="e.g. 1"
+                styleClass="metric-input"
+                (onBlur)="saveMetrics()"
+              />
+            </div>
+          </div>
+          <span class="save-indicator" [class.visible]="savingMetrics()">
+            <i class="pi pi-spin pi-spinner"></i> Saving…
+          </span>
+        </div>
+
         <!-- Tags -->
         <div class="tags-section">
           <div class="section-label" style="margin-bottom: 0.75rem">Tags</div>
