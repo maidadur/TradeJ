@@ -13,6 +13,7 @@ import { Trade, TradeFilter } from '../../../core/models/trade.model';
 import { TradeService } from '../../../core/services/trade.service';
 import { AccountService } from '../../../core/services/account.service';
 import { StrategyService } from '../../../core/services/strategy.service';
+import { TradeNavigationService } from '../../../core/services/trade-navigation.service';
 
 @Component({
   selector: 'app-trade-list',
@@ -29,6 +30,7 @@ export class TradeListComponent implements OnInit {
   private accountService = inject(AccountService);
   private strategyService = inject(StrategyService);
   private router = inject(Router);
+  private tradeNavService = inject(TradeNavigationService);
 
   trades = signal<Trade[]>([]);
   loading = signal(false);
@@ -80,6 +82,7 @@ export class TradeListComponent implements OnInit {
       next: result => {
         this.trades.set(result.items);
         this.totalCount.set(result.totalCount);
+        this.tradeNavService.setTradeIds(result.items.map(t => t.id));
         this.loading.set(false);
       },
       error: () => this.loading.set(false)

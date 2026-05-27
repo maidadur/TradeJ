@@ -1,9 +1,32 @@
 <p-toast />
 <div class="trade-detail-page">
-  <!-- Back nav -->
-  <a routerLink="/trades" class="back-link">
-    <i class="pi pi-arrow-left"></i> Back to Trades
-  </a>
+  <!-- Back nav + prev/next -->
+  <div class="nav-row">
+    <a routerLink="/trades" class="back-link">
+      <i class="pi pi-arrow-left"></i> Back to Trades
+    </a>
+    @if (navPosition()) {
+      <div class="trade-nav">
+        <p-button
+          icon="pi pi-chevron-left"
+          severity="secondary"
+          [text]="true"
+          [disabled]="!prevId()"
+          (onClick)="navigatePrev()"
+          pTooltip="Previous trade"
+        />
+        <span class="nav-position">{{ navPosition()!.current }} / {{ navPosition()!.total }}</span>
+        <p-button
+          icon="pi pi-chevron-right"
+          severity="secondary"
+          [text]="true"
+          [disabled]="!nextId()"
+          (onClick)="navigateNext()"
+          pTooltip="Next trade"
+        />
+      </div>
+    }
+  </div>
 
   @if (loading()) {
     <div class="loading-state" style="padding:4rem;display:flex;justify-content:center">

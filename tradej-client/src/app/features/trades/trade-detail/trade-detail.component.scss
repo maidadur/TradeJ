@@ -1,6 +1,26 @@
 
 @use 'theme' as *;
 
+.nav-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.trade-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.nav-position {
+  font-size: $size-sm;
+  color: $text-muted;
+  min-width: 4rem;
+  text-align: center;
+}
+
 .back-link {
   display: inline-flex;
   align-items: center;
@@ -8,7 +28,6 @@
   color: $text-muted;
   text-decoration: none;
   font-size: $size-base;
-  margin-bottom: 1.5rem;
 
   &:hover { color: $text; }
 }

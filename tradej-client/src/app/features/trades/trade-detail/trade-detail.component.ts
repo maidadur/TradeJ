@@ -1,6 +1,6 @@
-﻿import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -12,6 +12,7 @@ import { MessageService } from 'primeng/api';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { Trade } from '../../../core/models/trade.model';
 import { TradeService } from '../../../core/services/trade.service';
+import { TradeNavigationService } from '../../../core/services/trade-navigation.service';
 import { TagPickerComponent } from './tag-picker/tag-picker.component';
 import { StrategyPickerComponent } from './strategy-picker/strategy-picker.component';
 import { TradingviewChartComponent } from './tradingview-chart/tradingview-chart.component';
@@ -31,7 +32,9 @@ import { TradingviewChartComponent } from './tradingview-chart/tradingview-chart
 })
 export class TradeDetailComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private tradeService = inject(TradeService);
+  private tradeNavService = inject(TradeNavigationService);
   private messageService = inject(MessageService);
   private destroy$ = new Subject<void>();
   private notesChanged$ = new Subject<string>();
@@ -39,6 +42,21 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   trade = signal<Trade | null>(null);
   loading = signal(false);
   saving = signal(false);
+
+  prevId = computed(() => {
+    const t = this.trade();
+    return t ? this.tradeNavService.getPrevId(t.id) : null;
+  });
+
+  nextId = computed(() => {
+    const t = this.trade();
+    return t ? this.tradeNavService.getNextId(t.id) : null;
+  });
+
+  navPosition = computed(() => {
+    const t = this.trade();
+    return t ? this.tradeNavService.getPosition(t.id) : null;
+  });
 
   notesHtml = '';
 
@@ -49,8 +67,10 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   savingMetrics = signal(false);
 
   ngOnInit(): void {
-    const id = Number(this.route.snapshot.paramMap.get('id'));
-    this.loadTrade(id);
+    this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
+      const id = Number(params.get('id'));
+      this.loadTrade(id);
+    });
 
     // Auto-save notes with debounce
     this.notesChanged$.pipe(
@@ -123,5 +143,15 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
     if (value > 0) return 'pnl-pos';
     if (value < 0) return 'pnl-neg';
     return 'pnl-zero';
+  }
+
+  navigatePrev(): void {
+    const id = this.prevId();
+    if (id != null) this.router.navigate(['/trades', id]);
+  }
+
+  navigateNext(): void {
+    const id = this.nextId();
+    if (id != null) this.router.navigate(['/trades', id]);
   }
 }
