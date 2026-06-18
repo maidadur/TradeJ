@@ -13,6 +13,7 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { AccountService } from '../../core/services/account.service';
 import { Dashboard, DashboardSummary, MonthlyStats, DailyStats } from '../../core/models/dashboard.model';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-dashboard',
@@ -27,6 +28,7 @@ export class DashboardComponent implements OnInit {
   private accountService = inject(AccountService);
   private http = inject(HttpClient);
   private messageService = inject(MessageService);
+  private router = inject(Router);
 
   syncing = signal(false);
 
@@ -313,6 +315,10 @@ export class DashboardComponent implements OnInit {
     if (value > 0) return 'pnl-pos';
     if (value < 0) return 'pnl-neg';
     return 'pnl-zero';
+  }
+
+  goToDay(date: string): void {
+    this.router.navigate(['/day-view'], { queryParams: { date } });
   }
 
   resyncAll(): void {

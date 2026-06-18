@@ -165,8 +165,10 @@
               <div class="cal-cell cal-cell--empty"></div>
             } @else {
               <div class="cal-cell"
+                [class.cal-cell--clickable]="cell.stats"
                 [class.cal-cell--win]="cell.stats && cell.stats.netPnL > 0"
-                [class.cal-cell--loss]="cell.stats && cell.stats.netPnL < 0">
+                [class.cal-cell--loss]="cell.stats && cell.stats.netPnL < 0"
+                (click)="cell.stats && goToDay(cell.date)">
                 <div class="cal-cell-top">
                   <span class="cal-cell-day" [class.cal-cell-day--today]="cell.isToday">
                     {{cell.day}}

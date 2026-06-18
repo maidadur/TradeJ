@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ChartModule } from 'primeng/chart';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -27,6 +27,9 @@ export class DayViewComponent implements OnInit {
   private dayViewService = inject(DayViewService);
   private accountService = inject(AccountService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  targetDate: string | null = null;
 
   data = signal<DayViewData | null>(null);
   loading = signal(false);
@@ -132,6 +135,16 @@ export class DayViewComponent implements OnInit {
   calendarYear  = signal(new Date().getFullYear());
 
   ngOnInit(): void {
+    const dateParam = this.route.snapshot.queryParamMap.get('date');
+    if (dateParam) {
+      this.targetDate = dateParam;
+      const [y, m] = dateParam.split('-').map(Number);
+      this.selectedYear = y;
+      this.selectedMonth = m;
+      this.calendarYear.set(y);
+      this.calendarMonth.set(m);
+    }
+
     // Auto-save notes with debounce per date
     this.noteSave$.pipe(
       debounceTime(1500),
@@ -168,8 +181,13 @@ export class DayViewComponent implements OnInit {
             if (day.note) this.dayNotes.set(day.date, day.note);
             this.dayTags.set(day.date, day.tagIds ?? []);
           }
-          // Auto-expand first day
-          if (result.days.length > 0) {
+          // Auto-expand target day if jumped here from elsewhere, else first day
+          if (this.targetDate) {
+            const jumpTo = this.targetDate;
+            this.targetDate = null;
+            this.expandedDays.add(jumpTo);
+            setTimeout(() => this.scrollToDay(jumpTo));
+          } else if (result.days.length > 0) {
             this.expandedDays.add(result.days[0].date);
           }
         },
