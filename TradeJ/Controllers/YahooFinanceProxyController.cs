@@ -16,13 +16,18 @@ public class YahooFinanceProxyController(IHttpClientFactory httpClientFactory) :
     public async Task<IActionResult> Chart(
         string ticker,
         [FromQuery] string interval,
-        [FromQuery] string range,
+        [FromQuery] string? range = null,
+        [FromQuery] long? period1 = null,
+        [FromQuery] long? period2 = null,
         [FromQuery] bool includePrePost = false,
         CancellationToken ct = default)
     {
         var client = httpClientFactory.CreateClient("yahoo");
-        var path = $"v8/finance/chart/{Uri.EscapeDataString(ticker)}" +
-                   $"?interval={interval}&range={range}&includePrePost={includePrePost.ToString().ToLower()}";
+        var path = $"v8/finance/chart/{Uri.EscapeDataString(ticker)}?interval={interval}";
+        path += period1.HasValue && period2.HasValue
+            ? $"&period1={period1}&period2={period2}"
+            : $"&range={range}";
+        path += $"&includePrePost={includePrePost.ToString().ToLower()}";
 
         using var req = new HttpRequestMessage(HttpMethod.Get, new Uri(YahooBase, path));
         req.Headers.Add("User-Agent", "Mozilla/5.0");

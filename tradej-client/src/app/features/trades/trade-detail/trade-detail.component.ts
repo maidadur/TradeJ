@@ -15,7 +15,6 @@ import { TradeService } from '../../../core/services/trade.service';
 import { TradeNavigationService } from '../../../core/services/trade-navigation.service';
 import { TagPickerComponent } from './tag-picker/tag-picker.component';
 import { StrategyPickerComponent } from './strategy-picker/strategy-picker.component';
-import { TradingviewChartComponent } from './tradingview-chart/tradingview-chart.component';
 
 @Component({
   selector: 'app-trade-detail',
@@ -23,8 +22,7 @@ import { TradingviewChartComponent } from './tradingview-chart/tradingview-chart
   imports: [
     CommonModule, FormsModule, RouterLink,
     ButtonModule, TagModule, EditorModule, InputTextModule, InputNumberModule,
-    ToastModule, TagPickerComponent, StrategyPickerComponent,
-    TradingviewChartComponent
+    ToastModule, TagPickerComponent, StrategyPickerComponent
   ],
   providers: [MessageService],
   templateUrl: './trade-detail.component.html',
