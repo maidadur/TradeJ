@@ -204,7 +204,8 @@ public class TradesController(AppDbContext db) : ControllerBase
                    .Replace("&nbsp;", " ").Replace("&quot;", "\"").Replace("&#39;", "'");
         // Collapse excessive whitespace
         html = Regex.Replace(html, @"[ \t]+", " ");
-        html = Regex.Replace(html, @"\n{3,}", "\n\n");
+        // Flatten newlines to keep each CSV row on a single physical line
+        html = Regex.Replace(html, @"\s*[\r\n]+\s*", " / ");
         return html.Trim();
     }
 
