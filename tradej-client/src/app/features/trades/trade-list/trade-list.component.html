@@ -1,17 +1,26 @@
+<p-toast />
 <div class="trade-list-page">
   <div class="page-header">
     <h1 class="page-title">Trades</h1>
     <span class="trade-count" *ngIf="totalCount() > 0">{{totalCount()}} trades</span>
     @if (accountIds().length) {
-      <p-button
-        icon="pi pi-download"
-        label="Export CSV"
-        severity="secondary"
-        [text]="true"
-        (onClick)="exportCsv()"
-        pTooltip="Export filtered trades to CSV"
-        [style]="{'margin-left':'auto'}"
-      />
+      <div class="header-controls">
+        <p-button
+          icon="pi pi-sync"
+          label="Resync All"
+          severity="secondary"
+          size="small"
+          [loading]="syncing()"
+          (onClick)="resyncAll()"
+        />
+        <p-button
+          icon="pi pi-download"
+          label="Export CSV"
+          severity="secondary"
+          size="small"
+          (onClick)="exportCsv()"
+        />
+      </div>
     }
   </div>
 

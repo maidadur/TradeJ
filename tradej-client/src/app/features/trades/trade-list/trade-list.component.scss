@@ -1,6 +1,7 @@
 @use 'theme' as *;
 
 .page-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+.header-controls { display: flex; gap: 0.75rem; margin-left: auto; }
 .page-title { font-size: $size-xl; font-weight: 700; margin: 0; }
 .trade-count { font-size: $size-base; color: $text-muted; background: $bg-surface; padding: 3px 10px; border-radius: 99px; }
 

@@ -2,6 +2,7 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
@@ -9,6 +10,8 @@ import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
 import { DatePickerModule } from 'primeng/datepicker';
 import { PaginatorModule } from 'primeng/paginator';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 import { Trade, TradeFilter } from '../../../core/models/trade.model';
 import { TradeService } from '../../../core/services/trade.service';
 import { AccountService } from '../../../core/services/account.service';
@@ -20,8 +23,9 @@ import { TradeNavigationService } from '../../../core/services/trade-navigation.
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, InputTextModule,
-    SelectModule, ButtonModule, TagModule, DatePickerModule, PaginatorModule
+    SelectModule, ButtonModule, TagModule, DatePickerModule, PaginatorModule, ToastModule
   ],
+  providers: [MessageService],
   templateUrl: './trade-list.component.html',
   styleUrl: './trade-list.component.scss'
 })
@@ -31,9 +35,12 @@ export class TradeListComponent implements OnInit {
   private strategyService = inject(StrategyService);
   private router = inject(Router);
   private tradeNavService = inject(TradeNavigationService);
+  private http = inject(HttpClient);
+  private messageService = inject(MessageService);
 
   trades = signal<Trade[]>([]);
   loading = signal(false);
+  syncing = signal(false);
   totalCount = signal(0);
   currentPage = signal(1);
   accountIds = signal<number[]>([]);
@@ -135,6 +142,29 @@ export class TradeListComponent implements OnInit {
     if (!ids?.length) return '—';
     const map = this.strategyMap();
     return ids.map(id => map.get(id) ?? '?').join(', ');
+  }
+
+  resyncAll(): void {
+    if (this.syncing()) return;
+    const ids = this.accountIds();
+    if (!ids.length) return;
+    this.syncing.set(true);
+    this.http.post<{ imported: number; skipped: number; errors: number; errorMessages: string[] }>('/api/sync/selected', ids).subscribe({
+      next: (result) => {
+        this.syncing.set(false);
+        if (result.errors > 0) {
+          this.messageService.add({ severity: 'warn', summary: 'Sync completed with errors', detail: result.errorMessages[0] ?? 'Some accounts failed to sync.', life: 7000 });
+        } else {
+          this.messageService.add({ severity: 'success', summary: 'Sync complete', detail: `Imported ${result.imported}, skipped ${result.skipped}.`, life: 4000 });
+        }
+        this.loadTrades();
+      },
+      error: (err) => {
+        this.syncing.set(false);
+        const detail = err.error?.message ?? err.error ?? 'Could not reach the sync service.';
+        this.messageService.add({ severity: 'error', summary: 'Sync failed', detail, life: 7000 });
+      }
+    });
   }
 
   exportCsv(): void {
