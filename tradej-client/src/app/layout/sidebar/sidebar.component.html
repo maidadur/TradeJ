@@ -36,7 +36,7 @@
                 (change)="toggleAccount(acc.id)"
               >
               <span class="broker-badge" [attr.data-broker]="acc.broker.toLowerCase()">{{ acc.broker }}</span>
-              <span class="acc-name">{{ acc.name }}</span>
+              <span class="acc-name" [title]="acc.name">{{ acc.name }}</span>
             </label>
           }
 
