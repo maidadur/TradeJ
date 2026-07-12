@@ -174,11 +174,13 @@
               <i class="pi pi-spin pi-spinner"></i> Saving…
             </span>
           </div>
-          <p-editor
-            [(ngModel)]="notesHtml"
-            (ngModelChange)="onNotesChange($event)"
-            [style]="{'min-height':'220px'}"
-          />
+          <div (click)="onNotesClick($event)">
+            <p-editor
+              [(ngModel)]="notesHtml"
+              (ngModelChange)="onNotesChange($event)"
+              [style]="{'min-height':'220px'}"
+            />
+          </div>
         </div>
       </div>
     </div>
@@ -186,6 +188,16 @@
     <div class="empty-state" style="padding:4rem;display:flex;flex-direction:column;align-items:center;gap:1rem;color:#475569">
       <i class="pi pi-exclamation-circle" style="font-size:3rem"></i>
       <p>Trade not found.</p>
+    </div>
+  }
+
+  <!-- Screenshot lightbox -->
+  @if (lightboxSrc()) {
+    <div class="lightbox-overlay" (click)="closeLightbox()">
+      <button class="lightbox-close" (click)="closeLightbox()" aria-label="Close">
+        <i class="pi pi-times"></i>
+      </button>
+      <img class="lightbox-img" [src]="lightboxSrc()" (click)="$event.stopPropagation()" />
     </div>
   }
 </div>

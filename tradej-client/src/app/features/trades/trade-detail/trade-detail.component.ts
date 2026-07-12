@@ -1,4 +1,4 @@
-﻿import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -57,6 +57,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   });
 
   notesHtml = '';
+  lightboxSrc = signal<string | null>(null);
 
   // Metrics editing state
   metricsRR: number | null = null;
@@ -101,6 +102,22 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
 
   onNotesChange(html: string): void {
     this.notesChanged$.next(html);
+  }
+
+  onNotesClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (target.tagName === 'IMG') {
+      this.lightboxSrc.set((target as HTMLImageElement).src);
+    }
+  }
+
+  closeLightbox(): void {
+    this.lightboxSrc.set(null);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.closeLightbox();
   }
 
   saveNotes(html: string): void {
