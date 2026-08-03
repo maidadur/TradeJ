@@ -12,4 +12,5 @@ public class Strategy
 
     public ICollection<TradeStrategy> TradeStrategies { get; set; } = [];
     public ICollection<StrategyNote> Notes { get; set; } = [];
+    public ICollection<ChecklistItem> ChecklistItems { get; set; } = [];
 }

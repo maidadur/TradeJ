@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import {
-  CreateStrategyDto, StrategyDetail, StrategyListItem, StrategyNote, UpdateStrategyDto
+  ChecklistItem, CreateStrategyDto, StrategyDetail, StrategyListItem, StrategyNote, UpdateStrategyDto
 } from '../models/strategy.model';
 
 @Injectable({ providedIn: 'root' })
@@ -9,6 +9,7 @@ export class StrategyService {
   private http = inject(HttpClient);
   private readonly base = '/api/strategies';
   private readonly notesBase = '/api/strategynotes';
+  private readonly checklistBase = '/api/checklistitems';
 
   getAll() {
     return this.http.get<StrategyListItem[]>(this.base);
@@ -49,5 +50,31 @@ export class StrategyService {
 
   deleteNote(id: number) {
     return this.http.delete<void>(`${this.notesBase}/${id}`);
+  }
+
+  createChecklistItem(strategyId: number, text: string) {
+    return this.http.post<ChecklistItem>(
+      `${this.checklistBase}?strategyId=${strategyId}`,
+      { text }
+    );
+  }
+
+  updateChecklistItem(item: ChecklistItem) {
+    return this.http.put<ChecklistItem>(`${this.checklistBase}/${item.id}`, item);
+  }
+
+  deleteChecklistItem(id: number) {
+    return this.http.delete<void>(`${this.checklistBase}/${id}`);
+  }
+
+  reorderChecklistItems(strategyId: number, orderedIds: number[]) {
+    return this.http.post<void>(
+      `${this.checklistBase}/reorder?strategyId=${strategyId}`,
+      { orderedIds }
+    );
+  }
+
+  resetChecklist(strategyId: number) {
+    return this.http.post<void>(`${this.checklistBase}/reset?strategyId=${strategyId}`, {});
   }
 }

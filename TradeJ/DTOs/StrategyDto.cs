@@ -19,6 +19,7 @@ public record StrategyDetailDto(
     StrategyStatsDto Stats,
     List<StrategyTradeDto> Trades,
     List<StrategyNoteDto> Notes,
+    List<ChecklistItemDto> Checklist,
     DateTime CreatedAt,
     DateTime UpdatedAt);
 
@@ -62,3 +63,8 @@ public record UpdateStrategyDto(string Name, string? Description);
 public record UpdateStrategyStrategiesDto(List<int> StrategyIds);
 public record CreateStrategyNoteDto(string Title, string Content);
 public record UpdateStrategyNoteDto(string Title, string Content);
+
+public record ChecklistItemDto(int Id, string Text, int OrderIndex, bool IsChecked);
+public record CreateChecklistItemDto(string Text);
+public record UpdateChecklistItemDto(string Text, int OrderIndex, bool IsChecked);
+public record ReorderChecklistItemsDto(List<int> OrderedIds);

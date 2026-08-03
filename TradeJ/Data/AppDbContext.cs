@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Strategy> Strategies => Set<Strategy>();
     public DbSet<TradeStrategy> TradeStrategies => Set<TradeStrategy>();
     public DbSet<StrategyNote> StrategyNotes => Set<StrategyNote>();
+    public DbSet<ChecklistItem> ChecklistItems => Set<ChecklistItem>();
     public DbSet<AppSetting> AppSettings => Set<AppSetting>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -102,6 +103,14 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<AppSetting>(entity =>
         {
             entity.HasKey(s => s.Key);
+        });
+
+        modelBuilder.Entity<ChecklistItem>(entity =>
+        {
+            entity.HasOne(c => c.Strategy)
+                .WithMany(s => s.ChecklistItems)
+                .HasForeignKey(c => c.StrategyId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

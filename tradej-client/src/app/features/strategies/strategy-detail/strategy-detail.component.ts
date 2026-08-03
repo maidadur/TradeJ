@@ -9,9 +9,9 @@ import { TextareaModule } from 'primeng/textarea';
 import { TabsModule } from 'primeng/tabs';
 import { EditorModule } from 'primeng/editor';
 import { StrategyService } from '../../../core/services/strategy.service';
-import { StrategyDetail, StrategyNote, UpdateStrategyDto } from '../../../core/models/strategy.model';
+import { ChecklistItem, StrategyDetail, StrategyNote, UpdateStrategyDto } from '../../../core/models/strategy.model';
 
-type ActiveTab = 'stats' | 'trades' | 'notes';
+type ActiveTab = 'stats' | 'trades' | 'notes' | 'checklist';
 
 @Component({
   selector: 'app-strategy-detail',
@@ -48,6 +48,9 @@ export class StrategyDetailComponent implements OnInit {
   showEditNoteDialog = false;
   editNoteTitle = '';
   editNoteContent = '';
+
+  // Checklist
+  newChecklistText = '';
 
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
@@ -152,6 +155,65 @@ export class StrategyDetailComponent implements OnInit {
     this.strategyService.deleteNote(note.id).subscribe({
       next: () => {
         this.strategy.update(s => s ? { ...s, notes: s.notes.filter(n => n.id !== note.id) } : s);
+      }
+    });
+  }
+
+  addChecklistItem(): void {
+    const id = this.strategy()?.id;
+    if (!id || !this.newChecklistText.trim()) return;
+    this.strategyService.createChecklistItem(id, this.newChecklistText.trim()).subscribe({
+      next: item => {
+        this.strategy.update(s => s ? { ...s, checklist: [...s.checklist, item] } : s);
+        this.newChecklistText = '';
+      }
+    });
+  }
+
+  toggleChecklistItem(item: ChecklistItem): void {
+    const updated = { ...item, isChecked: !item.isChecked };
+    this.strategy.update(s => s ? {
+      ...s,
+      checklist: s.checklist.map(c => c.id === item.id ? updated : c)
+    } : s);
+    this.strategyService.updateChecklistItem(updated).subscribe();
+  }
+
+  deleteChecklistItem(item: ChecklistItem): void {
+    this.strategyService.deleteChecklistItem(item.id).subscribe({
+      next: () => {
+        this.strategy.update(s => s ? {
+          ...s,
+          checklist: s.checklist.filter(c => c.id !== item.id)
+        } : s);
+      }
+    });
+  }
+
+  moveChecklistItem(item: ChecklistItem, direction: -1 | 1): void {
+    const s = this.strategy();
+    if (!s) return;
+    const list = [...s.checklist].sort((a, b) => a.orderIndex - b.orderIndex);
+    const idx = list.findIndex(c => c.id === item.id);
+    const swapIdx = idx + direction;
+    if (idx < 0 || swapIdx < 0 || swapIdx >= list.length) return;
+
+    [list[idx], list[swapIdx]] = [list[swapIdx], list[idx]];
+    list.forEach((c, i) => c.orderIndex = i);
+
+    this.strategy.update(cur => cur ? { ...cur, checklist: list } : cur);
+    this.strategyService.reorderChecklistItems(s.id, list.map(c => c.id)).subscribe();
+  }
+
+  resetChecklist(): void {
+    const s = this.strategy();
+    if (!s) return;
+    this.strategyService.resetChecklist(s.id).subscribe({
+      next: () => {
+        this.strategy.update(cur => cur ? {
+          ...cur,
+          checklist: cur.checklist.map(c => ({ ...c, isChecked: false }))
+        } : cur);
       }
     });
   }

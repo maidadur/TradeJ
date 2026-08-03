@@ -301,6 +301,71 @@
   overflow: hidden;
 }
 
+/* Checklist */
+.checklist-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid $border-subtle;
+}
+
+.checklist-hint {
+  font-size: $size-sm;
+  color: $text-muted;
+}
+
+.checklist-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.checklist-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid $border-subtle;
+
+  &:last-child { border-bottom: none; }
+  &.checked .checklist-text { color: $text-dim; text-decoration: line-through; }
+}
+
+.checklist-check {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  cursor: pointer;
+  flex: 1;
+
+  input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: $accent;
+    cursor: pointer;
+  }
+}
+
+.checklist-text {
+  font-size: $size-sm;
+  color: $text;
+}
+
+.checklist-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.checklist-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+}
+
 /* P&L */
 .pnl-pos { color: $success; }
 .pnl-neg { color: $danger; }

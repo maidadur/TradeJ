@@ -54,6 +54,10 @@
             Notes
             <span class="tab-badge">{{strategy()!.notes.length}}</span>
           </button>
+          <button class="tab-btn" [class.active]="activeTab==='checklist'" (click)="activeTab='checklist'">
+            Checklist
+            <span class="tab-badge">{{strategy()!.checklist.length}}</span>
+          </button>
         </div>
 
         <!-- STATS TAB -->
@@ -154,6 +158,50 @@
               }
             </div>
           }
+        }
+
+        <!-- CHECKLIST TAB -->
+        @if (activeTab === 'checklist') {
+          <div class="checklist-header">
+            <span class="checklist-hint">Steps to verify before entering a trade with this strategy.</span>
+            <p-button
+              label="Reset"
+              icon="pi pi-refresh"
+              severity="secondary"
+              size="small"
+              [disabled]="!strategy()!.checklist.length"
+              (onClick)="resetChecklist()"
+            />
+          </div>
+          @if (strategy()!.checklist.length === 0) {
+            <div class="empty-tab">No checklist steps yet. Add your first step below.</div>
+          } @else {
+            <div class="checklist-list">
+              @for (item of strategy()!.checklist; track item.id; let first = $first; let last = $last) {
+                <div class="checklist-row" [class.checked]="item.isChecked">
+                  <label class="checklist-check">
+                    <input type="checkbox" [checked]="item.isChecked" (change)="toggleChecklistItem(item)" />
+                    <span class="checklist-text">{{item.text}}</span>
+                  </label>
+                  <div class="checklist-actions">
+                    <button class="icon-btn" [disabled]="first" (click)="moveChecklistItem(item, -1)"><i class="pi pi-chevron-up"></i></button>
+                    <button class="icon-btn" [disabled]="last" (click)="moveChecklistItem(item, 1)"><i class="pi pi-chevron-down"></i></button>
+                    <button class="icon-btn icon-btn--danger" (click)="deleteChecklistItem(item)"><i class="pi pi-trash"></i></button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+          <div class="checklist-add">
+            <input
+              pInputText
+              [(ngModel)]="newChecklistText"
+              placeholder="Add a step..."
+              class="w-full"
+              (keyup.enter)="addChecklistItem()"
+            />
+            <p-button label="Add" icon="pi pi-plus" size="small" [disabled]="!newChecklistText.trim()" (onClick)="addChecklistItem()" />
+          </div>
         }
       </div>
     </div>

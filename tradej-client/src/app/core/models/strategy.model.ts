@@ -38,6 +38,13 @@ export interface StrategyNote {
   updatedAt: string;
 }
 
+export interface ChecklistItem {
+  id: number;
+  text: string;
+  orderIndex: number;
+  isChecked: boolean;
+}
+
 export interface StrategyDetail {
   id: number;
   name: string;
@@ -48,6 +55,7 @@ export interface StrategyDetail {
   stats: StrategyStats;
   trades: StrategyTrade[];
   notes: StrategyNote[];
+  checklist: ChecklistItem[];
 }
 
 export interface CreateStrategyDto {

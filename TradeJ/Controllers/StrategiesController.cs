@@ -34,6 +34,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
             .Include(s => s.TradeStrategies)
                 .ThenInclude(ts => ts.Trade)
             .Include(s => s.Notes)
+            .Include(s => s.ChecklistItems)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (s is null) return NotFound();
@@ -68,6 +69,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
         var s = await db.Strategies
             .Include(s => s.TradeStrategies).ThenInclude(ts => ts.Trade)
             .Include(s => s.Notes)
+            .Include(s => s.ChecklistItems)
             .FirstOrDefaultAsync(s => s.Id == id);
 
         if (s is null) return NotFound();
@@ -161,6 +163,9 @@ public class StrategiesController(AppDbContext db) : ControllerBase
             )).ToList(),
             s.Notes.OrderByDescending(n => n.UpdatedAt).Select(n => new StrategyNoteDto(
                 n.Id, n.Title, n.Content, n.CreatedAt, n.UpdatedAt
+            )).ToList(),
+            s.ChecklistItems.OrderBy(c => c.OrderIndex).Select(c => new ChecklistItemDto(
+                c.Id, c.Text, c.OrderIndex, c.IsChecked
             )).ToList(),
             s.CreatedAt, s.UpdatedAt);
     }
