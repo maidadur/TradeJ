@@ -51,7 +51,12 @@ export class AccountService {
   }
 
   create(dto: CreateAccountDto) {
-    return this.http.post<Account>(this.apiUrl, dto);
+    return this.http.post<Account>(this.apiUrl, dto).pipe(
+      tap(created => {
+        this._allAccounts.next([...this._allAccounts.value, created]);
+        this.selectAccountIds([...this._selectedAccountIds.value, created.id]);
+      })
+    );
   }
 
   update(id: number, dto: UpdateAccountDto) {

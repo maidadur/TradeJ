@@ -19,7 +19,8 @@ export class SidebarComponent implements OnInit {
   panelOpen    = false;
 
   ngOnInit(): void {
-    this.accountService.getAll().subscribe(list => this.accounts.set(list));
+    this.accountService.getAll().subscribe();
+    this.accountService.allAccounts$.subscribe(list => this.accounts.set(list));
     this.accountService.selectedAccountIds$.subscribe(ids => this.selectedIds.set(ids));
   }
 
