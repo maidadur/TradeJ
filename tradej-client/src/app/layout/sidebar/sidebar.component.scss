@@ -67,23 +67,19 @@
 }
 
 .acc-panel {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  position: fixed;
+  width: 280px;
   z-index: 9999;
   background: #161927;
   border: 1px solid $border;
   border-radius: $radius-md;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
   padding: 0.5rem 0;
-  max-height: 360px;
-  overflow-y: auto;
 }
 
 .acc-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.5rem;
   padding: 0.45rem 1rem;
   cursor: pointer;
@@ -98,6 +94,7 @@
     height: 14px;
     cursor: pointer;
     flex-shrink: 0;
+    margin-top: 0.2rem;
   }
 }
 
@@ -108,7 +105,7 @@
 }
 
 .acc-row-label { flex: 1; }
-.acc-name      { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-name      { flex: 1; min-width: 0; white-space: normal; word-break: break-word; }
 
 .acc-divider {
   font-size: $size-xs;

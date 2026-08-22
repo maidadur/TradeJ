@@ -1,4 +1,4 @@
-import { Component, OnInit, HostListener, ElementRef, inject, signal } from '@angular/core';
+import { Component, OnInit, HostListener, ElementRef, ViewChild, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { Account } from '../../core/models/account.model';
 import { AccountService } from '../../core/services/account.service';
@@ -14,9 +14,12 @@ export class SidebarComponent implements OnInit {
   private accountService = inject(AccountService);
   private elRef        = inject(ElementRef);
 
+  @ViewChild('accTrigger') accTrigger?: ElementRef<HTMLElement>;
+
   accounts     = signal<Account[]>([]);
   selectedIds  = signal<number[]>([]);
   panelOpen    = false;
+  panelPos     = { top: 0, left: 0 };
 
   ngOnInit(): void {
     this.accountService.getAll().subscribe();
@@ -43,7 +46,13 @@ export class SidebarComponent implements OnInit {
     return `${ids.length} accounts`;
   }
 
-  togglePanel(): void { this.panelOpen = !this.panelOpen; }
+  togglePanel(): void {
+    this.panelOpen = !this.panelOpen;
+    if (this.panelOpen && this.accTrigger) {
+      const rect = this.accTrigger.nativeElement.getBoundingClientRect();
+      this.panelPos = { top: rect.bottom + 4, left: rect.left };
+    }
+  }
 
   toggleAll(): void {
     this.accountService.selectAccountIds(

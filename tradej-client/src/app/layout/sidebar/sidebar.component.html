@@ -9,13 +9,13 @@
   <div class="account-section">
     <div class="section-label">Active Account</div>
     <div class="acc-wrap">
-      <button class="acc-trigger" (click)="togglePanel()">
+      <button class="acc-trigger" #accTrigger (click)="togglePanel()">
         <span class="acc-trigger-label">{{ triggerLabel }}</span>
         <i class="pi" [class.pi-chevron-down]="!panelOpen" [class.pi-chevron-up]="panelOpen"></i>
       </button>
 
       @if (panelOpen) {
-        <div class="acc-panel">
+        <div class="acc-panel" [style.top.px]="panelPos.top" [style.left.px]="panelPos.left">
           <!-- All accounts row -->
           <label class="acc-row acc-all-row">
             <input
