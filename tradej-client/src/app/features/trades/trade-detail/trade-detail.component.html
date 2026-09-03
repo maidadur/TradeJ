@@ -48,6 +48,21 @@
           </div>
         </div>
 
+        <div class="revoke-row">
+          <p-button
+            [label]="trade()!.isRevoked ? 'Restore trade' : 'Mark as revoked'"
+            [icon]="trade()!.isRevoked ? 'pi pi-replay' : 'pi pi-ban'"
+            [severity]="trade()!.isRevoked ? 'secondary' : 'danger'"
+            [outlined]="true"
+            [loading]="savingRevoked()"
+            (onClick)="toggleRevoked()"
+            pTooltip="Revoked trades are excluded from statistics"
+          />
+          @if (trade()!.isRevoked) {
+            <p-tag value="Revoked — excluded from statistics" severity="danger" />
+          }
+        </div>
+
         <div class="info-grid">
           <div class="info-item">
             <span class="info-label">Status</span>

@@ -64,6 +64,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   metricsActualRR: number | null = null;
   metricsRiskPercent: number | null = null;
   savingMetrics = signal(false);
+  savingRevoked = signal(false);
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -146,6 +147,26 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
         this.messageService.add({ severity: 'success', summary: 'Saved', detail: 'Metrics updated', life: 2000 });
       },
       error: () => this.savingMetrics.set(false)
+    });
+  }
+
+  toggleRevoked(): void {
+    const t = this.trade();
+    if (!t) return;
+    const isRevoked = !t.isRevoked;
+    this.savingRevoked.set(true);
+    this.tradeService.updateRevoked(t.id, isRevoked).subscribe({
+      next: () => {
+        this.savingRevoked.set(false);
+        this.trade.update(tr => tr ? { ...tr, isRevoked } : tr);
+        this.messageService.add({
+          severity: isRevoked ? 'warn' : 'success',
+          summary: isRevoked ? 'Trade revoked' : 'Trade restored',
+          detail: isRevoked ? 'Excluded from statistics' : 'Included in statistics again',
+          life: 2500
+        });
+      },
+      error: () => this.savingRevoked.set(false)
     });
   }
 

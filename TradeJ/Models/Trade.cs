@@ -33,6 +33,8 @@ public class Trade
     public string? Notes { get; set; }
     public string? Tags { get; set; }
 
+    public bool IsRevoked { get; set; }
+
     public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<TradeTag> TradeTags { get; set; } = [];

@@ -10,7 +10,7 @@ public class DashboardService(AppDbContext db)
     public async Task<DashboardDto> GetDashboardAsync(int[] accountIds, int year, int? month)
     {
         var query = db.Trades
-            .Where(t => accountIds.Contains(t.AccountId) && t.Status == TradeStatus.Closed);
+            .Where(t => accountIds.Contains(t.AccountId) && t.Status == TradeStatus.Closed && !t.IsRevoked);
 
         if (month.HasValue)
             query = query.Where(t => t.ExitTime!.Value.Year == year && t.ExitTime.Value.Month == month.Value);

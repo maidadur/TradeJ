@@ -22,6 +22,7 @@ public record TradeDto(
     decimal? RiskPercent,
     string? Notes,
     string? Tags,
+    bool IsRevoked,
     DateTime ImportedAt,
     List<int> TagIds,
     List<int> StrategyIds);
@@ -38,6 +39,8 @@ public record UpdateTradeNotesDto(
 public record UpdateTradeTagsDto(List<int> TagIds);
 
 public record UpdateTradeStrategiesDto(List<int> StrategyIds);
+
+public record UpdateTradeRevokedDto(bool IsRevoked);
 
 public record PagedResult<T>(
     List<T> Items,

@@ -109,12 +109,17 @@
           </tr>
         </ng-template>
         <ng-template #body let-trade>
-          <tr class="trade-row" (click)="openTrade(trade.id)" style="cursor:pointer">
+          <tr class="trade-row" [class.trade-revoked]="trade.isRevoked" (click)="openTrade(trade.id)" style="cursor:pointer">
             <td>
               <span>{{trade.entryTime | date:'MMM d, y'}}</span>
               <br><span class="time-sub">{{trade.entryTime | date:'HH:mm'}}</span>
             </td>
-            <td><strong>{{trade.symbol}}</strong></td>
+            <td>
+              <strong>{{trade.symbol}}</strong>
+              @if (trade.isRevoked) {
+                <i class="pi pi-ban" style="color:#ef4444;margin-left:6px" pTooltip="Revoked — excluded from statistics"></i>
+              }
+            </td>
             <td>
               <span class="dir-badge" [class.dir-long]="trade.direction==='Long'" [class.dir-short]="trade.direction==='Short'">
                 {{trade.direction === 'Long' ? '▲ Long' : '▼ Short'}}

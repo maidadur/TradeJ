@@ -20,6 +20,7 @@ export interface Trade {
   riskPercent?: number | null;
   notes?: string;
   tags?: string;
+  isRevoked: boolean;
   importedAt: string;
   tagIds: number[];
   strategyIds: number[];

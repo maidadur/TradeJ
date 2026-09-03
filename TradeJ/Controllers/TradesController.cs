@@ -266,6 +266,17 @@ public class TradesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    [HttpPatch("{id:int}/revoked")]
+    public async Task<IActionResult> UpdateRevoked(int id, [FromBody] UpdateTradeRevokedDto dto)
+    {
+        var trade = await db.Trades.FindAsync(id);
+        if (trade is null) return NotFound();
+
+        trade.IsRevoked = dto.IsRevoked;
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     private static TradeDto MapToDto(Models.Trade t, string baseUrl) => new(
         t.Id,
         t.AccountId,
@@ -288,6 +299,7 @@ public class TradesController(AppDbContext db) : ControllerBase
         t.RiskPercent,
         t.Notes,
         t.Tags,
+        t.IsRevoked,
         t.ImportedAt,
         t.TradeTags?.Select(tt => tt.TagId).ToList() ?? [],
         t.TradeStrategies?.Select(ts => ts.StrategyId).ToList() ?? []

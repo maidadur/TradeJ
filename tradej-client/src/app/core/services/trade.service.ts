@@ -46,6 +46,10 @@ export class TradeService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/metrics`, { rr, actualRR, riskPercent });
   }
 
+  updateRevoked(id: number, isRevoked: boolean) {
+    return this.http.patch<void>(`${this.apiUrl}/${id}/revoked`, { isRevoked });
+  }
+
   exportCsv(filter: Partial<TradeFilter> & { accountIds: number[] }) {
     let params = new HttpParams();
     for (const id of filter.accountIds) {
