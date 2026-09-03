@@ -2,9 +2,26 @@
 <div class="trade-detail-page">
   <!-- Back nav + prev/next -->
   <div class="nav-row">
-    <a routerLink="/trades" class="back-link">
-      <i class="pi pi-arrow-left"></i> Back to Trades
-    </a>
+    <div class="nav-left">
+      <a routerLink="/trades" class="back-link">
+        <i class="pi pi-arrow-left"></i> Back to Trades
+      </a>
+      @if (trade()) {
+        <p-button
+          [label]="trade()!.isRevoked ? 'Restore trade' : 'Mark as revoked'"
+          [icon]="trade()!.isRevoked ? 'pi pi-replay' : 'pi pi-ban'"
+          [severity]="trade()!.isRevoked ? 'secondary' : 'danger'"
+          [outlined]="true"
+          [size]="'small'"
+          [loading]="savingRevoked()"
+          (onClick)="toggleRevoked()"
+          pTooltip="Revoked trades are excluded from statistics"
+        />
+        @if (trade()!.isRevoked) {
+          <p-tag value="Revoked — excluded from statistics" severity="danger" />
+        }
+      }
+    </div>
     @if (navPosition()) {
       <div class="trade-nav">
         <p-button
@@ -46,21 +63,6 @@
           <div class="pnl-block" [class.pnl-pos]="trade()!.netPnL > 0" [class.pnl-neg]="trade()!.netPnL < 0">
             {{formatPnL(trade()!.netPnL)}}
           </div>
-        </div>
-
-        <div class="revoke-row">
-          <p-button
-            [label]="trade()!.isRevoked ? 'Restore trade' : 'Mark as revoked'"
-            [icon]="trade()!.isRevoked ? 'pi pi-replay' : 'pi pi-ban'"
-            [severity]="trade()!.isRevoked ? 'secondary' : 'danger'"
-            [outlined]="true"
-            [loading]="savingRevoked()"
-            (onClick)="toggleRevoked()"
-            pTooltip="Revoked trades are excluded from statistics"
-          />
-          @if (trade()!.isRevoked) {
-            <p-tag value="Revoked — excluded from statistics" severity="danger" />
-          }
         </div>
 
         <div class="info-grid">

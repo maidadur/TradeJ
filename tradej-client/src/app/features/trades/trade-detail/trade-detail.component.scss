@@ -8,6 +8,8 @@
   margin-bottom: 1.5rem;
 }
 
+.nav-left { display: flex; align-items: center; gap: 0.75rem; }
+
 .trade-nav {
   display: flex;
   align-items: center;
@@ -43,7 +45,6 @@
 }
 
 .trade-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
-.revoke-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
 .symbol-block { display: flex; align-items: center; gap: 0.75rem; }
 .symbol-text { font-size: $size-xl; font-weight: 700; }
 .pnl-block { font-size: $size-xl; font-weight: 700; }
