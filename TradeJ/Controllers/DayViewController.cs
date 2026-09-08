@@ -20,7 +20,7 @@ public class DayViewController(AppDbContext db) : ControllerBase
         [FromQuery] DateTime? dateTo)
     {
         var query = db.Trades
-            .Where(t => accountIds.Contains(t.AccountId) && t.Status == TradeStatus.Closed);
+            .Where(t => accountIds.Contains(t.AccountId) && t.Status == TradeStatus.Closed && t.MergedIntoTradeId == null);
 
         if (dateFrom.HasValue)
             query = query.Where(t => t.ExitTime >= dateFrom.Value);

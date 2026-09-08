@@ -138,7 +138,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
     // ---- Helpers ----
     private static StrategyListItemDto ToListItem(Strategy s, string baseUrl)
     {
-        var trades = s.TradeStrategies.Select(ts => ts.Trade).ToList();
+        var trades = s.TradeStrategies.Where(ts => ts.Trade.MergedIntoTradeId == null).Select(ts => ts.Trade).ToList();
         var stats  = CalcStats(trades);
         return new StrategyListItemDto(
             s.Id, s.Name, s.Description,
@@ -149,7 +149,7 @@ public class StrategiesController(AppDbContext db) : ControllerBase
 
     private static StrategyDetailDto ToDetail(Strategy s, string baseUrl)
     {
-        var trades = s.TradeStrategies.Select(ts => ts.Trade).OrderByDescending(t => t.EntryTime).ToList();
+        var trades = s.TradeStrategies.Where(ts => ts.Trade.MergedIntoTradeId == null).Select(ts => ts.Trade).OrderByDescending(t => t.EntryTime).ToList();
         var stats  = CalcStats(trades);
         return new StrategyDetailDto(
             s.Id, s.Name, s.Description,
