@@ -37,6 +37,13 @@ public class Trade
 
     public DateTime ImportedAt { get; set; } = DateTime.UtcNow;
 
+    /// <summary>Set when this trade was folded into a merged trade; null otherwise.</summary>
+    public int? MergedIntoTradeId { get; set; }
+    public Trade? MergedInto { get; set; }
+
+    /// <summary>Source trades folded into this one, when this trade is a merge result.</summary>
+    public ICollection<Trade> MergedTrades { get; set; } = [];
+
     public ICollection<TradeTag> TradeTags { get; set; } = [];
     public ICollection<TradeStrategy> TradeStrategies { get; set; } = [];
 }

@@ -50,6 +50,14 @@ export class TradeService {
     return this.http.patch<void>(`${this.apiUrl}/${id}/revoked`, { isRevoked });
   }
 
+  mergeTrades(tradeIds: number[]) {
+    return this.http.post<Trade>(`${this.apiUrl}/merge`, { tradeIds });
+  }
+
+  unmergeTrade(id: number) {
+    return this.http.post<void>(`${this.apiUrl}/${id}/unmerge`, {});
+  }
+
   exportCsv(filter: Partial<TradeFilter> & { accountIds: number[] }) {
     let params = new HttpParams();
     for (const id of filter.accountIds) {

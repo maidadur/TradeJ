@@ -34,6 +34,11 @@ public class AppDbContext : DbContext
 
             entity.HasIndex(t => new { t.AccountId, t.BrokerTradeId }).IsUnique();
 
+            entity.HasOne(t => t.MergedInto)
+                .WithMany(t => t.MergedTrades)
+                .HasForeignKey(t => t.MergedIntoTradeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
             entity.Property(t => t.EntryPrice).HasPrecision(18, 8);
             entity.Property(t => t.ExitPrice).HasPrecision(18, 8);
             entity.Property(t => t.Volume).HasPrecision(18, 8);

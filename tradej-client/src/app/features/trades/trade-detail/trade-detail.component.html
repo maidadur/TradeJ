@@ -45,6 +45,34 @@
     }
   </div>
 
+  @if (trade()?.mergedIntoTradeId; as parentId) {
+    <div class="merge-banner">
+      <i class="pi pi-clone"></i>
+      <span>This trade was merged into <a (click)="goToTrade(parentId)" style="cursor:pointer;text-decoration:underline">trade #{{parentId}}</a> and is hidden from the main list.</span>
+    </div>
+  }
+
+  @if (trade()?.mergedTradeIds?.length) {
+    <div class="merge-banner">
+      <i class="pi pi-clone"></i>
+      <span>Combined from {{trade()!.mergedTradeIds.length}} trades:
+        @for (id of trade()!.mergedTradeIds; track id) {
+          <a (click)="goToTrade(id)" style="cursor:pointer;text-decoration:underline;margin-right:6px">#{{id}}</a>
+        }
+      </span>
+      <p-button
+        label="Undo merge"
+        icon="pi pi-replay"
+        severity="secondary"
+        [outlined]="true"
+        size="small"
+        [loading]="unmerging()"
+        (onClick)="unmergeTrade()"
+        pTooltip="Deletes this combined trade and restores the originals to the list"
+      />
+    </div>
+  }
+
   @if (loading()) {
     <div class="loading-state" style="padding:4rem;display:flex;justify-content:center">
       <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>

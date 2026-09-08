@@ -1,6 +1,23 @@
 
 @use 'theme' as *;
 
+.merge-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  background: $accent-bg;
+  border: 1px solid $accent-dark;
+  border-radius: $radius-md;
+  color: $accent-light;
+  font-size: $size-sm;
+
+  i { color: $accent; font-size: 1rem; }
+  span { flex: 1; }
+  a { color: $accent-light; }
+}
+
 .nav-row {
   display: flex;
   align-items: center;

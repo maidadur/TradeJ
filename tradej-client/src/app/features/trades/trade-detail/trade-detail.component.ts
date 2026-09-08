@@ -65,6 +65,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   metricsRiskPercent: number | null = null;
   savingMetrics = signal(false);
   savingRevoked = signal(false);
+  unmerging = signal(false);
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -168,6 +169,27 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
       },
       error: () => this.savingRevoked.set(false)
     });
+  }
+
+  unmergeTrade(): void {
+    const t = this.trade();
+    if (!t || !t.mergedTradeIds?.length) return;
+    this.unmerging.set(true);
+    this.tradeService.unmergeTrade(t.id).subscribe({
+      next: () => {
+        this.messageService.add({ severity: 'success', summary: 'Merge undone', detail: 'Original trades are restored to the list.', life: 3000 });
+        this.router.navigate(['/trades']);
+      },
+      error: (err) => {
+        this.unmerging.set(false);
+        const detail = err.error?.message ?? err.error ?? 'Could not undo merge.';
+        this.messageService.add({ severity: 'error', summary: 'Unmerge failed', detail, life: 5000 });
+      }
+    });
+  }
+
+  goToTrade(id: number): void {
+    this.router.navigate(['/trades', id]);
   }
 
   formatPnL(value: number): string {

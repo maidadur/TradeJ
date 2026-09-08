@@ -32,7 +32,8 @@ public class TradesController(AppDbContext db) : ControllerBase
             .Include(t => t.Account)
             .Include(t => t.TradeTags)
             .Include(t => t.TradeStrategies)
-            .Where(t => accountIds.Contains(t.AccountId));
+            .Include(t => t.MergedTrades)
+            .Where(t => accountIds.Contains(t.AccountId) && t.MergedIntoTradeId == null);
 
         if (!string.IsNullOrWhiteSpace(symbol))
             query = query.Where(t => t.Symbol.ToLower().Contains(symbol.ToLower()));
@@ -83,6 +84,7 @@ public class TradesController(AppDbContext db) : ControllerBase
             .Include(t => t.Account)
             .Include(t => t.TradeTags)
             .Include(t => t.TradeStrategies)
+            .Include(t => t.MergedTrades)
             .FirstOrDefaultAsync(t => t.Id == id);
 
         if (t is null) return NotFound();
@@ -106,7 +108,7 @@ public class TradesController(AppDbContext db) : ControllerBase
             .Include(t => t.Account)
             .Include(t => t.TradeTags).ThenInclude(tt => tt.Tag)
             .Include(t => t.TradeStrategies).ThenInclude(ts => ts.Strategy)
-            .AsQueryable();
+            .Where(t => t.MergedIntoTradeId == null);
 
         if (accountIds.Length > 0)
             query = query.Where(t => accountIds.Contains(t.AccountId));
@@ -277,6 +279,101 @@ public class TradesController(AppDbContext db) : ControllerBase
         return NoContent();
     }
 
+    [HttpPost("merge")]
+    public async Task<ActionResult<TradeDto>> Merge([FromBody] MergeTradesDto dto)
+    {
+        var ids = (dto.TradeIds ?? []).Distinct().ToList();
+        if (ids.Count < 2) return BadRequest("Select at least 2 trades to merge.");
+
+        var trades = await db.Trades
+            .Include(t => t.TradeTags)
+            .Include(t => t.TradeStrategies)
+            .Where(t => ids.Contains(t.Id))
+            .ToListAsync();
+
+        if (trades.Count != ids.Count) return NotFound("One or more trades not found.");
+
+        if (trades.Any(t => t.MergedIntoTradeId != null))
+            return BadRequest("One or more selected trades are already part of a merge.");
+
+        var isAlreadyMergeParent = await db.Trades
+            .AnyAsync(t => t.MergedIntoTradeId != null && ids.Contains(t.MergedIntoTradeId!.Value));
+        if (isAlreadyMergeParent)
+            return BadRequest("One or more selected trades already contain merged trades.");
+
+        if (trades.Any(t => t.Status == TradeStatus.Cancelled))
+            return BadRequest("Cancelled trades cannot be merged.");
+
+        var accountId = trades[0].AccountId;
+        var symbol = trades[0].Symbol;
+        var direction = trades[0].Direction;
+        if (trades.Any(t => t.AccountId != accountId || t.Symbol != symbol || t.Direction != direction))
+            return BadRequest("Trades must share the same account, symbol, and direction to merge.");
+
+        var totalVolume = trades.Sum(t => t.Volume);
+        var allClosed = trades.All(t => t.Status == TradeStatus.Closed && t.ExitPrice.HasValue);
+
+        var merged = new Models.Trade
+        {
+            AccountId = accountId,
+            BrokerTradeId = $"MERGE-{Guid.NewGuid():N}",
+            Symbol = symbol,
+            Direction = direction,
+            Status = allClosed ? TradeStatus.Closed : TradeStatus.Open,
+            EntryPrice = totalVolume > 0
+                ? trades.Sum(t => t.EntryPrice * t.Volume) / totalVolume
+                : trades.Average(t => t.EntryPrice),
+            ExitPrice = allClosed && totalVolume > 0
+                ? trades.Sum(t => t.ExitPrice!.Value * t.Volume) / totalVolume
+                : null,
+            EntryTime = trades.Min(t => t.EntryTime),
+            ExitTime = allClosed ? trades.Max(t => t.ExitTime) : null,
+            Volume = totalVolume,
+            GrossPnL = trades.Sum(t => t.GrossPnL),
+            Commission = trades.Sum(t => t.Commission),
+            Swap = trades.Sum(t => t.Swap),
+            NetPnL = trades.Sum(t => t.NetPnL),
+            Notes = string.Join("<hr/>", trades.Where(t => !string.IsNullOrWhiteSpace(t.Notes)).Select(t => t.Notes)),
+            ImportedAt = DateTime.UtcNow,
+        };
+
+        foreach (var tagId in trades.SelectMany(t => t.TradeTags.Select(tt => tt.TagId)).Distinct())
+            merged.TradeTags.Add(new TradeTag { TagId = tagId });
+        foreach (var stratId in trades.SelectMany(t => t.TradeStrategies.Select(ts => ts.StrategyId)).Distinct())
+            merged.TradeStrategies.Add(new TradeStrategy { StrategyId = stratId });
+
+        db.Trades.Add(merged);
+        await db.SaveChangesAsync();
+
+        foreach (var t in trades) t.MergedIntoTradeId = merged.Id;
+        await db.SaveChangesAsync();
+
+        var result = await db.Trades
+            .Include(t => t.Account)
+            .Include(t => t.TradeTags)
+            .Include(t => t.TradeStrategies)
+            .Include(t => t.MergedTrades)
+            .FirstAsync(t => t.Id == merged.Id);
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        return Ok(MapToDto(result, baseUrl));
+    }
+
+    [HttpPost("{id:int}/unmerge")]
+    public async Task<IActionResult> Unmerge(int id)
+    {
+        var merged = await db.Trades
+            .Include(t => t.MergedTrades)
+            .FirstOrDefaultAsync(t => t.Id == id);
+        if (merged is null) return NotFound();
+        if (merged.MergedTrades.Count == 0) return BadRequest("Trade is not a merge result.");
+
+        foreach (var child in merged.MergedTrades) child.MergedIntoTradeId = null;
+        db.Trades.Remove(merged);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+
     private static TradeDto MapToDto(Models.Trade t, string baseUrl) => new(
         t.Id,
         t.AccountId,
@@ -302,6 +399,8 @@ public class TradesController(AppDbContext db) : ControllerBase
         t.IsRevoked,
         t.ImportedAt,
         t.TradeTags?.Select(tt => tt.TagId).ToList() ?? [],
-        t.TradeStrategies?.Select(ts => ts.StrategyId).ToList() ?? []
+        t.TradeStrategies?.Select(ts => ts.StrategyId).ToList() ?? [],
+        t.MergedIntoTradeId,
+        t.MergedTrades?.Select(m => m.Id).ToList() ?? []
     );
 }

@@ -11,7 +11,9 @@ import { TagModule } from 'primeng/tag';
 import { DatePickerModule } from 'primeng/datepicker';
 import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Trade, TradeFilter } from '../../../core/models/trade.model';
 import { TradeService } from '../../../core/services/trade.service';
 import { AccountService } from '../../../core/services/account.service';
@@ -23,9 +25,10 @@ import { TradeNavigationService } from '../../../core/services/trade-navigation.
   standalone: true,
   imports: [
     CommonModule, FormsModule, TableModule, InputTextModule,
-    SelectModule, ButtonModule, TagModule, DatePickerModule, PaginatorModule, ToastModule
+    SelectModule, ButtonModule, TagModule, DatePickerModule, PaginatorModule, ToastModule,
+    ConfirmDialogModule, TooltipModule
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './trade-list.component.html',
   styleUrl: './trade-list.component.scss'
 })
@@ -37,15 +40,19 @@ export class TradeListComponent implements OnInit {
   private tradeNavService = inject(TradeNavigationService);
   private http = inject(HttpClient);
   private messageService = inject(MessageService);
+  private confirmService = inject(ConfirmationService);
 
   trades = signal<Trade[]>([]);
   loading = signal(false);
   syncing = signal(false);
+  merging = signal(false);
   totalCount = signal(0);
   currentPage = signal(1);
   accountIds = signal<number[]>([]);
   strategyMap = signal<Map<number, string>>(new Map());
   pageSize = 50;
+
+  selectedTrades: Trade[] = [];
 
   filter: Partial<TradeFilter> = { sortBy: 'entryTime', sortDesc: true };
   dateFrom: Date | null = null;
@@ -73,6 +80,7 @@ export class TradeListComponent implements OnInit {
     const ids = this.accountIds();
     if (!ids.length) return;
     this.loading.set(true);
+    this.selectedTrades = [];
     const f: TradeFilter = {
       accountIds: ids,
       page: this.currentPage(),
@@ -163,6 +171,51 @@ export class TradeListComponent implements OnInit {
         this.syncing.set(false);
         const detail = err.error?.message ?? err.error ?? 'Could not reach the sync service.';
         this.messageService.add({ severity: 'error', summary: 'Sync failed', detail, life: 7000 });
+      }
+    });
+  }
+
+  get mergeBlockReason(): string | null {
+    const sel = this.selectedTrades;
+    if (sel.length < 2) return null;
+    const first = sel[0];
+    if (sel.some(t => t.accountId !== first.accountId || t.symbol !== first.symbol || t.direction !== first.direction)) {
+      return 'Selected trades must share the same account, symbol, and direction.';
+    }
+    if (sel.some(t => t.mergedTradeIds?.length)) {
+      return "A trade that already contains merged trades can't be merged again.";
+    }
+    return null;
+  }
+
+  get canMerge(): boolean {
+    return this.selectedTrades.length >= 2 && !this.mergeBlockReason;
+  }
+
+  mergeSelected(): void {
+    if (!this.canMerge || this.merging()) return;
+    const ids = this.selectedTrades.map(t => t.id);
+    const count = ids.length;
+    this.confirmService.confirm({
+      message: `Merge ${count} trades into one combined trade? The originals stay in the database but will no longer appear in this list. You can undo this later from the merged trade's detail page.`,
+      header: 'Merge Trades',
+      icon: 'pi pi-clone',
+      acceptButtonStyleClass: 'p-button-primary',
+      accept: () => {
+        this.merging.set(true);
+        this.tradeService.mergeTrades(ids).subscribe({
+          next: () => {
+            this.merging.set(false);
+            this.selectedTrades = [];
+            this.messageService.add({ severity: 'success', summary: 'Trades merged', detail: `${count} trades combined into one.`, life: 3000 });
+            this.loadTrades();
+          },
+          error: (err) => {
+            this.merging.set(false);
+            const detail = err.error?.message ?? err.error ?? 'Could not merge trades.';
+            this.messageService.add({ severity: 'error', summary: 'Merge failed', detail, life: 5000 });
+          }
+        });
       }
     });
   }

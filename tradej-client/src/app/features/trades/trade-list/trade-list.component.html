@@ -1,10 +1,23 @@
 <p-toast />
+<p-confirmdialog />
 <div class="trade-list-page">
   <div class="page-header">
     <h1 class="page-title">Trades</h1>
     <span class="trade-count" *ngIf="totalCount() > 0">{{totalCount()}} trades</span>
     @if (accountIds().length) {
       <div class="header-controls">
+        @if (selectedTrades.length > 1) {
+          <p-button
+            icon="pi pi-clone"
+            [label]="'Merge ' + selectedTrades.length + ' Trades'"
+            severity="primary"
+            size="small"
+            [loading]="merging()"
+            [disabled]="!canMerge"
+            [pTooltip]="mergeBlockReason ?? ''"
+            (onClick)="mergeSelected()"
+          />
+        }
         <p-button
           icon="pi pi-sync"
           label="Resync All"
@@ -82,6 +95,8 @@
     <div class="table-card">
       <p-table
         [value]="trades()"
+        [(selection)]="selectedTrades"
+        dataKey="id"
         [loading]="loading()"
         styleClass="p-datatable-sm p-datatable-gridlines trade-table"
         sortField="entryTime"
@@ -89,6 +104,9 @@
       >
         <ng-template #header>
           <tr>
+            <th style="width:36px">
+              <p-tableHeaderCheckbox />
+            </th>
             <th pSortableColumn="entryTime" style="width:150px">
               Date <p-sortIcon field="entryTime" />
             </th>
@@ -110,6 +128,9 @@
         </ng-template>
         <ng-template #body let-trade>
           <tr class="trade-row" [class.trade-revoked]="trade.isRevoked" (click)="openTrade(trade.id)" style="cursor:pointer">
+            <td (click)="$event.stopPropagation()">
+              <p-tableCheckbox [value]="trade" />
+            </td>
             <td>
               <span>{{trade.entryTime | date:'MMM d, y'}}</span>
               <br><span class="time-sub">{{trade.entryTime | date:'HH:mm'}}</span>
@@ -118,6 +139,9 @@
               <strong>{{trade.symbol}}</strong>
               @if (trade.isRevoked) {
                 <i class="pi pi-ban" style="color:#ef4444;margin-left:6px" pTooltip="Revoked — excluded from statistics"></i>
+              }
+              @if (trade.mergedTradeIds?.length) {
+                <i class="pi pi-clone" style="color:#6366f1;margin-left:6px" [pTooltip]="'Combined from ' + trade.mergedTradeIds.length + ' trades'"></i>
               }
             </td>
             <td>
@@ -145,7 +169,7 @@
         </ng-template>
         <ng-template #emptymessage>
           <tr>
-            <td colspan="13">
+            <td colspan="14">
               <div class="empty-state" style="padding:2rem">
                 <i class="pi pi-inbox" style="font-size:2rem;color:#475569"></i>
                 <p>No trades found. Try importing trades or adjusting your filters.</p>

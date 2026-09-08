@@ -25,7 +25,9 @@ public record TradeDto(
     bool IsRevoked,
     DateTime ImportedAt,
     List<int> TagIds,
-    List<int> StrategyIds);
+    List<int> StrategyIds,
+    int? MergedIntoTradeId,
+    List<int> MergedTradeIds);
 
 public record UpdateTradeMetricsDto(
     decimal? RR,
@@ -41,6 +43,8 @@ public record UpdateTradeTagsDto(List<int> TagIds);
 public record UpdateTradeStrategiesDto(List<int> StrategyIds);
 
 public record UpdateTradeRevokedDto(bool IsRevoked);
+
+public record MergeTradesDto(List<int> TradeIds);
 
 public record PagedResult<T>(
     List<T> Items,

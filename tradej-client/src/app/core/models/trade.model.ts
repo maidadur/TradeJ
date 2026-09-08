@@ -24,6 +24,8 @@ export interface Trade {
   importedAt: string;
   tagIds: number[];
   strategyIds: number[];
+  mergedIntoTradeId?: number | null;
+  mergedTradeIds: number[];
 }
 
 export interface PagedResult<T> {
