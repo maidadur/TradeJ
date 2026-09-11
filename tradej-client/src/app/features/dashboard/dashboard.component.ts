@@ -134,7 +134,7 @@ export class DashboardComponent implements OnInit {
   });
 
   selectedYear = new Date().getFullYear();
-  selectedMonth: number | null = null;
+  selectedMonth: number | null = new Date().getMonth() + 1;
 
   yearOptions = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
   monthOptions = [
