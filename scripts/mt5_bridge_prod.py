@@ -98,8 +98,14 @@ def fetch_deals(login: int, password: str, server: str,
             if deals is None:
                 return []
 
+            # Deals themselves carry no sl/tp — only the order that generated them does.
+            # Build a ticket -> (sl, tp) lookup from orders in the same window.
+            orders = mt5.history_orders_get(from_utc, to_utc) or []
+            sl_tp_by_order = {o.ticket: (o.sl, o.tp) for o in orders}
+
             result = []
             for d in deals:
+                sl, tp = sl_tp_by_order.get(d.order, (0.0, 0.0))
                 result.append({
                     "id":         str(d.ticket),
                     "positionId": str(d.position_id),
@@ -113,8 +119,64 @@ def fetch_deals(login: int, password: str, server: str,
                     "commission": float(d.commission),
                     "swap":       float(d.swap),
                     "comment":    d.comment,
+                    "stopLoss":   float(sl) if sl else None,
+                    "takeProfit": float(tp) if tp else None,
                 })
             return result
+        finally:
+            mt5.shutdown()
+
+
+_TIMEFRAMES = {
+    "M1":  "TIMEFRAME_M1",
+    "M5":  "TIMEFRAME_M5",
+    "M15": "TIMEFRAME_M15",
+    "M30": "TIMEFRAME_M30",
+    "H1":  "TIMEFRAME_H1",
+    "H4":  "TIMEFRAME_H4",
+    "D1":  "TIMEFRAME_D1",
+}
+
+
+def fetch_bars(login: int, password: str, server: str, symbol: str, timeframe: str,
+               date_from: datetime, date_to: datetime) -> list[dict]:
+    """Connect to MT5 and return OHLC bars for a symbol/timeframe/range."""
+    tf_name = _TIMEFRAMES.get(timeframe.upper())
+    if tf_name is None:
+        raise ValueError(f"Unknown timeframe '{timeframe}'. Use one of: {', '.join(_TIMEFRAMES)}")
+    tf_const = getattr(mt5, tf_name)
+
+    with _mt5_lock:
+        if not mt5.initialize():
+            raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")
+
+        try:
+            info = mt5.account_info()
+            if info is None or info.login != login:
+                if not mt5.login(login, password=password, server=server):
+                    raise PermissionError(f"mt5.login() failed: {mt5.last_error()}")
+
+            from_utc = date_from.astimezone(timezone.utc)
+            to_utc   = date_to.astimezone(timezone.utc)
+
+            rates = mt5.copy_rates_range(symbol, tf_const, from_utc, to_utc)
+            if rates is None or len(rates) == 0:
+                time.sleep(1.5)
+                rates = mt5.copy_rates_range(symbol, tf_const, from_utc, to_utc)
+            if rates is None:
+                return []
+
+            return [
+                {
+                    "time":   int(r["time"]),
+                    "open":   float(r["open"]),
+                    "high":   float(r["high"]),
+                    "low":    float(r["low"]),
+                    "close":  float(r["close"]),
+                    "volume": float(r["tick_volume"]),
+                }
+                for r in rates
+            ]
         finally:
             mt5.shutdown()
 
@@ -133,8 +195,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
-        if parsed.path != "/deals":
-            self.send_json(404, {"error": "Not found. Use GET /deals"})
+        if parsed.path not in ("/deals", "/bars"):
+            self.send_json(404, {"error": "Not found. Use GET /deals or GET /bars"})
             return
 
         qs = parse_qs(parsed.query)
@@ -151,15 +213,23 @@ class Handler(BaseHTTPRequestHandler):
             server   = require("server")
             date_from = _parse_dt(require("from"))
             date_to   = _parse_dt(require("to"))
+            if parsed.path == "/bars":
+                symbol    = require("symbol")
+                timeframe = require("timeframe")
         except (ValueError, KeyError) as e:
             self.send_json(400, {"error": str(e)})
             return
 
         try:
-            deals = fetch_deals(login, password, server, date_from, date_to)
-            self.send_json(200, deals)
+            if parsed.path == "/deals":
+                data = fetch_deals(login, password, server, date_from, date_to)
+            else:
+                data = fetch_bars(login, password, server, symbol, timeframe, date_from, date_to)
+            self.send_json(200, data)
         except PermissionError as e:
             self.send_json(401, {"error": str(e)})
+        except ValueError as e:
+            self.send_json(400, {"error": str(e)})
         except Exception as e:
             print(f"ERROR: {e}")
             self.send_json(500, {"error": str(e)})

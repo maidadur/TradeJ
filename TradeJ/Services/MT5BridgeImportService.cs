@@ -107,6 +107,8 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                         existing.Swap       = swap;
                         existing.NetPnL     = netPnL;
                         existing.Status     = TradeStatus.Closed;
+                        existing.StopLoss   = lastExit.StopLoss ?? existing.StopLoss;
+                        existing.TakeProfit = lastExit.TakeProfit ?? existing.TakeProfit;
                         imported++;
                     }
                     else
@@ -125,6 +127,8 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                     ? entryDeals.Sum(d => d.Price * d.Volume) / totalEntryVol
                     : firstEntry.Price;
                 var status     = lastExit is not null ? TradeStatus.Closed : TradeStatus.Open;
+                var stopLoss   = lastExit?.StopLoss ?? firstEntry.StopLoss;
+                var takeProfit = lastExit?.TakeProfit ?? firstEntry.TakeProfit;
 
                 if (existing is not null)
                 {
@@ -137,6 +141,8 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                     existing.Swap       = swap;
                     existing.NetPnL     = netPnL;
                     existing.Status     = status;
+                    existing.StopLoss   = stopLoss;
+                    existing.TakeProfit = takeProfit;
                     skipped++;
                 }
                 else
@@ -156,7 +162,9 @@ public class MT5BridgeImportService(AppDbContext db, IHttpClientFactory httpClie
                         GrossPnL      = grossPnL,
                         Commission    = commission,
                         Swap          = swap,
-                        NetPnL        = netPnL
+                        NetPnL        = netPnL,
+                        StopLoss      = stopLoss,
+                        TakeProfit    = takeProfit
                     });
                     imported++;
                 }

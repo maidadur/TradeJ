@@ -22,6 +22,7 @@ public class Program
         builder.Services.AddScoped<DashboardService>();
         builder.Services.AddScoped<MT5LiveImportService>();
         builder.Services.AddScoped<MT5BridgeImportService>();
+        builder.Services.AddScoped<MT5BarsService>();
         builder.Services.AddScoped<CTraderApiService>();
         builder.Services.AddSingleton<AppSettingsService>();
         builder.Services.AddSingleton<MT5AutoSyncService>();

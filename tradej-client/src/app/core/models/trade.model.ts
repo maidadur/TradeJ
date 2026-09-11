@@ -10,6 +10,8 @@ export interface Trade {
   exitPrice?: number;
   entryTime: string;
   exitTime?: string;
+  stopLoss?: number | null;
+  takeProfit?: number | null;
   volume: number;
   grossPnL: number;
   commission: number;

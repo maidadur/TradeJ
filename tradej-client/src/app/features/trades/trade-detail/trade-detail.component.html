@@ -78,6 +78,10 @@
       <i class="pi pi-spin pi-spinner" style="font-size:2rem;color:#6366f1"></i>
     </div>
   } @else if (trade()) {
+    @if (!hasScreenshots()) {
+      <app-trade-chart [trade]="trade()!" />
+    }
+
     <div class="detail-layout">
       <!-- Left: Trade Info -->
       <div class="info-panel">
@@ -125,6 +129,14 @@
           <div class="info-item">
             <span class="info-label">Exit Price</span>
             <span class="info-value mono">{{trade()!.exitPrice != null ? (trade()!.exitPrice! | number:'1.2-8') : '—'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Stop Loss</span>
+            <span class="info-value mono">{{trade()!.stopLoss != null ? (trade()!.stopLoss! | number:'1.2-8') : '—'}}</span>
+          </div>
+          <div class="info-item">
+            <span class="info-label">Take Profit</span>
+            <span class="info-value mono">{{trade()!.takeProfit != null ? (trade()!.takeProfit! | number:'1.2-8') : '—'}}</span>
           </div>
           <div class="info-item">
             <span class="info-label">Gross P&amp;L</span>

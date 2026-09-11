@@ -12,6 +12,8 @@ public record TradeDto(
     decimal? ExitPrice,
     DateTime EntryTime,
     DateTime? ExitTime,
+    decimal? StopLoss,
+    decimal? TakeProfit,
     decimal Volume,
     decimal GrossPnL,
     decimal Commission,

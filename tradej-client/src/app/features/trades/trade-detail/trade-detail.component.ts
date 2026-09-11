@@ -15,6 +15,7 @@ import { TradeService } from '../../../core/services/trade.service';
 import { TradeNavigationService } from '../../../core/services/trade-navigation.service';
 import { TagPickerComponent } from './tag-picker/tag-picker.component';
 import { StrategyPickerComponent } from './strategy-picker/strategy-picker.component';
+import { TradeChartComponent } from './trade-chart/trade-chart.component';
 
 @Component({
   selector: 'app-trade-detail',
@@ -22,7 +23,7 @@ import { StrategyPickerComponent } from './strategy-picker/strategy-picker.compo
   imports: [
     CommonModule, FormsModule, RouterLink,
     ButtonModule, TagModule, EditorModule, InputTextModule, InputNumberModule,
-    ToastModule, TagPickerComponent, StrategyPickerComponent
+    ToastModule, TagPickerComponent, StrategyPickerComponent, TradeChartComponent
   ],
   providers: [MessageService],
   templateUrl: './trade-detail.component.html',
@@ -40,6 +41,9 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   trade = signal<Trade | null>(null);
   loading = signal(false);
   saving = signal(false);
+
+  // Notes can carry pasted screenshots — when they do, the price chart takes a back seat.
+  hasScreenshots = computed(() => /<img\b/i.test(this.trade()?.notes ?? ''));
 
   prevId = computed(() => {
     const t = this.trade();

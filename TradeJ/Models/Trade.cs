@@ -19,6 +19,9 @@ public class Trade
     public DateTime EntryTime { get; set; }
     public DateTime? ExitTime { get; set; }
 
+    public decimal? StopLoss { get; set; }
+    public decimal? TakeProfit { get; set; }
+
     public decimal Volume { get; set; }
 
     public decimal GrossPnL { get; set; }

@@ -91,6 +91,8 @@ public class MT5LiveImportService(AppDbContext db, IHttpClientFactory httpClient
                 var grossPnL   = exitDeals.Sum(d => d.Profit);
                 var netPnL     = grossPnL + commission + swap;
                 var status     = lastExit is not null ? TradeStatus.Closed : TradeStatus.Open;
+                var stopLoss   = lastExit?.StopLoss ?? firstEntry.StopLoss;
+                var takeProfit = lastExit?.TakeProfit ?? firstEntry.TakeProfit;
 
                 var existing = await db.Trades.FirstOrDefaultAsync(
                     t => t.AccountId == accountId && t.BrokerTradeId == positionId);
@@ -106,6 +108,8 @@ public class MT5LiveImportService(AppDbContext db, IHttpClientFactory httpClient
                     existing.Swap       = swap;
                     existing.NetPnL     = netPnL;
                     existing.Status     = status;
+                    existing.StopLoss   = stopLoss;
+                    existing.TakeProfit = takeProfit;
                     skipped++;
                 }
                 else
@@ -125,7 +129,9 @@ public class MT5LiveImportService(AppDbContext db, IHttpClientFactory httpClient
                         GrossPnL      = grossPnL,
                         Commission    = commission,
                         Swap          = swap,
-                        NetPnL        = netPnL
+                        NetPnL        = netPnL,
+                        StopLoss      = stopLoss,
+                        TakeProfit    = takeProfit
                     });
                     imported++;
                 }
@@ -157,4 +163,6 @@ public class MetaApiDeal
     public decimal Commission { get; set; }
     public decimal Swap { get; set; }
     public string? Comment { get; set; }
+    public decimal? StopLoss { get; set; }
+    public decimal? TakeProfit { get; set; }
 }

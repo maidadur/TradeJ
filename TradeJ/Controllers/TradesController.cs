@@ -386,6 +386,8 @@ public class TradesController(AppDbContext db) : ControllerBase
         t.ExitPrice,
         t.EntryTime,
         t.ExitTime,
+        t.StopLoss,
+        t.TakeProfit,
         t.Volume,
         t.GrossPnL,
         t.Commission,
