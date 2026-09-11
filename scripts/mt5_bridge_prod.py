@@ -40,6 +40,29 @@ PORT = 8765
 # Mutex so concurrent requests don't interfere with MT5 login state.
 _mt5_lock = threading.Lock()
 
+_initialized = False
+
+
+def _ensure_session(login: int, password: str, server: str) -> None:
+    """Initialize the MT5 connection once and reuse it for the life of the process.
+
+    Calling mt5.initialize()/mt5.shutdown() on every request pops the MT5 terminal
+    window to the foreground each time — so we connect once and only re-login when
+    the caller asks for a different account than the one we're currently on. If the
+    terminal is already logged into the correct account (e.g. with the real/write
+    password), we reuse that session so we don't downgrade it to investor-only access.
+    """
+    global _initialized
+    if not _initialized:
+        if not mt5.initialize():
+            raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")
+        _initialized = True
+
+    info = mt5.account_info()
+    if info is None or info.login != login:
+        if not mt5.login(login, password=password, server=server):
+            raise PermissionError(f"mt5.login() failed: {mt5.last_error()}")
+
 
 def _parse_dt(s: str) -> datetime:
     """Parse ISO 8601 datetime string (may or may not include Z/offset)."""
@@ -73,58 +96,46 @@ def fetch_deals(login: int, password: str, server: str,
                 date_from: datetime, date_to: datetime) -> list[dict]:
     """Connect to MT5 with the given credentials and return deals in the requested range."""
     with _mt5_lock:
-        if not mt5.initialize():
-            raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")
+        _ensure_session(login, password, server)
 
-        try:
-            # If the terminal is already logged into the correct account (e.g. with
-            # the real/write password), reuse that session so we don't downgrade it
-            # to investor-only access and break active trading.
-            info = mt5.account_info()
-            if info is None or info.login != login:
-                if not mt5.login(login, password=password, server=server):
-                    raise PermissionError(f"mt5.login() failed: {mt5.last_error()}")
+        # Ensure UTC-aware datetimes for the API call
+        from_utc = date_from.astimezone(timezone.utc)
+        to_utc   = date_to.astimezone(timezone.utc)
 
-            # Ensure UTC-aware datetimes for the API call
-            from_utc = date_from.astimezone(timezone.utc)
-            to_utc   = date_to.astimezone(timezone.utc)
-
-            # MT5 may need a moment to load history after initialize/login.
-            # Retry once with a short delay if the first call returns nothing.
+        # MT5 may need a moment to load history after initialize/login.
+        # Retry once with a short delay if the first call returns nothing.
+        deals = mt5.history_deals_get(from_utc, to_utc)
+        if not deals:
+            time.sleep(1.5)
             deals = mt5.history_deals_get(from_utc, to_utc)
-            if not deals:
-                time.sleep(1.5)
-                deals = mt5.history_deals_get(from_utc, to_utc)
-            if deals is None:
-                return []
+        if deals is None:
+            return []
 
-            # Deals themselves carry no sl/tp — only the order that generated them does.
-            # Build a ticket -> (sl, tp) lookup from orders in the same window.
-            orders = mt5.history_orders_get(from_utc, to_utc) or []
-            sl_tp_by_order = {o.ticket: (o.sl, o.tp) for o in orders}
+        # Deals themselves carry no sl/tp — only the order that generated them does.
+        # Build a ticket -> (sl, tp) lookup from orders in the same window.
+        orders = mt5.history_orders_get(from_utc, to_utc) or []
+        sl_tp_by_order = {o.ticket: (o.sl, o.tp) for o in orders}
 
-            result = []
-            for d in deals:
-                sl, tp = sl_tp_by_order.get(d.order, (0.0, 0.0))
-                result.append({
-                    "id":         str(d.ticket),
-                    "positionId": str(d.position_id),
-                    "type":       _deal_type_str(d.type),
-                    "entry":      _deal_entry_str(d.entry),
-                    "symbol":     d.symbol,
-                    "time":       datetime.utcfromtimestamp(d.time).strftime("%Y-%m-%dT%H:%M:%SZ"),
-                    "volume":     float(d.volume),
-                    "price":      float(d.price),
-                    "profit":     float(d.profit),
-                    "commission": float(d.commission),
-                    "swap":       float(d.swap),
-                    "comment":    d.comment,
-                    "stopLoss":   float(sl) if sl else None,
-                    "takeProfit": float(tp) if tp else None,
-                })
-            return result
-        finally:
-            mt5.shutdown()
+        result = []
+        for d in deals:
+            sl, tp = sl_tp_by_order.get(d.order, (0.0, 0.0))
+            result.append({
+                "id":         str(d.ticket),
+                "positionId": str(d.position_id),
+                "type":       _deal_type_str(d.type),
+                "entry":      _deal_entry_str(d.entry),
+                "symbol":     d.symbol,
+                "time":       datetime.utcfromtimestamp(d.time).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "volume":     float(d.volume),
+                "price":      float(d.price),
+                "profit":     float(d.profit),
+                "commission": float(d.commission),
+                "swap":       float(d.swap),
+                "comment":    d.comment,
+                "stopLoss":   float(sl) if sl else None,
+                "takeProfit": float(tp) if tp else None,
+            })
+        return result
 
 
 _TIMEFRAMES = {
@@ -147,38 +158,29 @@ def fetch_bars(login: int, password: str, server: str, symbol: str, timeframe: s
     tf_const = getattr(mt5, tf_name)
 
     with _mt5_lock:
-        if not mt5.initialize():
-            raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")
+        _ensure_session(login, password, server)
 
-        try:
-            info = mt5.account_info()
-            if info is None or info.login != login:
-                if not mt5.login(login, password=password, server=server):
-                    raise PermissionError(f"mt5.login() failed: {mt5.last_error()}")
+        from_utc = date_from.astimezone(timezone.utc)
+        to_utc   = date_to.astimezone(timezone.utc)
 
-            from_utc = date_from.astimezone(timezone.utc)
-            to_utc   = date_to.astimezone(timezone.utc)
-
+        rates = mt5.copy_rates_range(symbol, tf_const, from_utc, to_utc)
+        if rates is None or len(rates) == 0:
+            time.sleep(1.5)
             rates = mt5.copy_rates_range(symbol, tf_const, from_utc, to_utc)
-            if rates is None or len(rates) == 0:
-                time.sleep(1.5)
-                rates = mt5.copy_rates_range(symbol, tf_const, from_utc, to_utc)
-            if rates is None:
-                return []
+        if rates is None:
+            return []
 
-            return [
-                {
-                    "time":   int(r["time"]),
-                    "open":   float(r["open"]),
-                    "high":   float(r["high"]),
-                    "low":    float(r["low"]),
-                    "close":  float(r["close"]),
-                    "volume": float(r["tick_volume"]),
-                }
-                for r in rates
-            ]
-        finally:
-            mt5.shutdown()
+        return [
+            {
+                "time":   int(r["time"]),
+                "open":   float(r["open"]),
+                "high":   float(r["high"]),
+                "low":    float(r["low"]),
+                "close":  float(r["close"]),
+                "volume": float(r["tick_volume"]),
+            }
+            for r in rates
+        ]
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -257,10 +259,15 @@ if __name__ == "__main__":
             server_thread.join()
         except KeyboardInterrupt:
             server.shutdown()
+        finally:
+            if _initialized:
+                mt5.shutdown()
     else:
         def on_stop(icon, item):
             icon.stop()
             server.shutdown()
+            if _initialized:
+                mt5.shutdown()
 
         icon = pystray.Icon(
             "MT5 Bridge",

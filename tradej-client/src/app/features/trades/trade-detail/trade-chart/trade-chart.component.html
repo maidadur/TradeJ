@@ -1,36 +1,33 @@
-<div class="chart-card">
-  <div class="chart-toolbar">
-    <span class="section-label">Chart</span>
-    <p-select
-      [options]="timeframeOptions"
-      [ngModel]="timeframe()"
-      optionLabel="label"
-      optionValue="value"
-      (onChange)="onTimeframeChange($event.value)"
-      styleClass="timeframe-select"
-    />
-  </div>
-
-  <div class="chart-body">
-    <div class="chart-container" [class.hidden]="loading() || error() || !hasBars()">
-      <div #container class="chart-canvas"></div>
-      <div #zoneTp class="zone zone-tp" hidden></div>
-      <div #zoneSl class="zone zone-sl" hidden></div>
+@if (!error()) {
+  <div class="chart-card">
+    <div class="chart-toolbar">
+      <span class="section-label">Chart</span>
+      <p-select
+        [options]="timeframeOptions"
+        [ngModel]="timeframe()"
+        optionLabel="label"
+        optionValue="value"
+        (onChange)="onTimeframeChange($event.value)"
+        styleClass="timeframe-select"
+      />
     </div>
 
-    @if (loading()) {
-      <div class="chart-state">
-        <i class="pi pi-spin pi-spinner"></i>
+    <div class="chart-body">
+      <div class="chart-container" [class.hidden]="loading() || !hasBars()">
+        <div #container class="chart-canvas"></div>
+        <div #zoneTp class="zone zone-tp" hidden></div>
+        <div #zoneSl class="zone zone-sl" hidden></div>
       </div>
-    } @else if (error()) {
-      <div class="chart-state error">
-        <i class="pi pi-exclamation-triangle"></i>
-        <span>{{ error() }}</span>
-      </div>
-    } @else if (!hasBars()) {
-      <div class="chart-state">
-        <span>No price data returned for this window.</span>
-      </div>
-    }
+
+      @if (loading()) {
+        <div class="chart-state">
+          <i class="pi pi-spin pi-spinner"></i>
+        </div>
+      } @else if (!hasBars()) {
+        <div class="chart-state">
+          <span>No price data returned for this window.</span>
+        </div>
+      }
+    </div>
   </div>
-</div>
+}
