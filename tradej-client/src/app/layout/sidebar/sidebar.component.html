@@ -28,7 +28,7 @@
 
           <div class="acc-divider">My accounts</div>
 
-          @for (acc of accounts(); track acc.id) {
+          @for (acc of activeAccounts; track acc.id) {
             <label class="acc-row">
               <input
                 type="checkbox"

@@ -262,11 +262,9 @@ export class DashboardComponent implements OnInit {
   }
 
   private syncCalToFilter(): void {
-    if (this.calYear() !== this.selectedYear) {
-      this.selectedYear = this.calYear();
-      this.selectedMonth = null;
-      this.load();
-    }
+    this.selectedYear = this.calYear();
+    this.selectedMonth = this.calMonth();
+    this.load();
   }
 
   ngOnInit(): void {
