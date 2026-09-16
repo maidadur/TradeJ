@@ -43,6 +43,11 @@ def _ensure_session(login: int, password: str, server: str) -> None:
     the caller asks for a different account than the one we're currently on.
     """
     global _initialized
+    if _initialized and mt5.terminal_info() is None:
+        # IPC link died — e.g. the MT5 terminal was closed and reopened. Reconnect.
+        mt5.shutdown()
+        _initialized = False
+
     if not _initialized:
         if not mt5.initialize():
             raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")

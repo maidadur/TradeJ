@@ -53,6 +53,11 @@ def _ensure_session(login: int, password: str, server: str) -> None:
     password), we reuse that session so we don't downgrade it to investor-only access.
     """
     global _initialized
+    if _initialized and mt5.terminal_info() is None:
+        # IPC link died — e.g. the MT5 terminal was closed and reopened. Reconnect.
+        mt5.shutdown()
+        _initialized = False
+
     if not _initialized:
         if not mt5.initialize():
             raise RuntimeError(f"mt5.initialize() failed: {mt5.last_error()}")
