@@ -27,9 +27,13 @@ export class SidebarComponent implements OnInit {
     this.accountService.selectedAccountIds$.subscribe(ids => this.selectedIds.set(ids));
   }
 
+  get activeAccounts(): Account[] {
+    return this.accounts().filter(a => a.isActive);
+  }
+
   get allSelected(): boolean {
-    return this.accounts().length > 0 &&
-           this.selectedIds().length === this.accounts().length;
+    return this.activeAccounts.length > 0 &&
+           this.selectedIds().length === this.activeAccounts.length;
   }
 
   get someSelected(): boolean {
@@ -38,7 +42,7 @@ export class SidebarComponent implements OnInit {
 
   get triggerLabel(): string {
     const ids = this.selectedIds();
-    const all = this.accounts();
+    const all = this.activeAccounts;
     if (!all.length)      return 'No accounts';
     if (!ids.length)      return 'No account selected';
     if (ids.length === all.length) return 'All accounts';
@@ -56,7 +60,7 @@ export class SidebarComponent implements OnInit {
 
   toggleAll(): void {
     this.accountService.selectAccountIds(
-      this.allSelected ? [] : this.accounts().map(a => a.id)
+      this.allSelected ? [] : this.activeAccounts.map(a => a.id)
     );
   }
 
