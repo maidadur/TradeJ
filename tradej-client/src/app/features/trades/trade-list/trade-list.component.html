@@ -6,6 +6,13 @@
     <span class="trade-count" *ngIf="totalCount() > 0">{{totalCount()}} trades</span>
     @if (accountIds().length) {
       <div class="header-controls">
+        <p-button
+          icon="pi pi-plus"
+          label="Add Trade"
+          severity="primary"
+          size="small"
+          (onClick)="openAddDialog()"
+        />
         @if (selectedTrades.length > 1) {
           <p-button
             icon="pi pi-clone"
@@ -160,9 +167,12 @@
             <td class="text-right num">{{trade.volume}}</td>
             <td class="text-right num">{{formatDuration(trade.entryTime, trade.exitTime)}}</td>
             <td class="strategy-cell">{{getStrategyNames(trade.strategyIds)}}</td>
-            <td>
+            <td (click)="$event.stopPropagation()">
               @if (trade.notes) {
-                <i class="pi pi-file-edit" style="color:#6366f1" title="Has notes"></i>
+                <i class="pi pi-file-edit" style="color:#6366f1;margin-right:8px" title="Has notes"></i>
+              }
+              @if (isManual(trade)) {
+                <i class="pi pi-trash" style="color:#ef4444;cursor:pointer" pTooltip="Delete manually added trade" (click)="deleteTrade(trade)"></i>
               }
             </td>
           </tr>
@@ -193,3 +203,101 @@
     }
   }
 </div>
+
+<p-dialog
+  header="Add Trade Manually"
+  [(visible)]="addDialogVisibleProxy"
+  [modal]="true"
+  [style]="{width: '520px'}"
+  [draggable]="false"
+>
+  <div class="add-trade-form">
+    <div class="form-row">
+      <label>Account *</label>
+      <p-select
+        [options]="accounts()"
+        optionLabel="name"
+        optionValue="id"
+        [(ngModel)]="newTrade.accountId"
+        placeholder="Select account"
+        [style]="{width: '100%'}"
+      />
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Symbol *</label>
+        <p-autoComplete
+          [(ngModel)]="newTrade.symbol"
+          [suggestions]="symbolSuggestions"
+          (completeMethod)="filterSymbols($event)"
+          [forceSelection]="false"
+          placeholder="e.g. NQ, ES"
+          [style]="{width: '100%'}"
+          [inputStyle]="{width: '100%'}"
+        />
+      </div>
+      <div>
+        <label>Direction *</label>
+        <p-select [options]="directionOptions" [(ngModel)]="newTrade.direction" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Entry Time</label>
+        <p-datepicker [(ngModel)]="newTrade.entryTimeDate" [showTime]="true" dateFormat="yy-mm-dd" [style]="{width: '100%'}" />
+      </div>
+      <div>
+        <label>Entry Price</label>
+        <p-inputNumber [(ngModel)]="newTrade.entryPrice" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="8" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Exit Time</label>
+        <p-datepicker [(ngModel)]="newTrade.exitTimeDate" [showTime]="true" dateFormat="yy-mm-dd" [style]="{width: '100%'}" />
+      </div>
+      <div>
+        <label>Exit Price</label>
+        <p-inputNumber [(ngModel)]="newTrade.exitPrice" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="8" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Volume / Contracts *</label>
+        <p-inputNumber [(ngModel)]="newTrade.volume" mode="decimal" [minFractionDigits]="0" [maxFractionDigits]="4" [style]="{width: '100%'}" />
+      </div>
+      <div>
+        <label>Net P&amp;L *</label>
+        <p-inputNumber [(ngModel)]="newTrade.netPnL" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Stop Loss</label>
+        <p-inputNumber [(ngModel)]="newTrade.stopLoss" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="8" [style]="{width: '100%'}" />
+      </div>
+      <div>
+        <label>Take Profit</label>
+        <p-inputNumber [(ngModel)]="newTrade.takeProfit" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="8" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row two-col">
+      <div>
+        <label>Commission</label>
+        <p-inputNumber [(ngModel)]="newTrade.commission" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [style]="{width: '100%'}" />
+      </div>
+      <div>
+        <label>Swap</label>
+        <p-inputNumber [(ngModel)]="newTrade.swap" mode="decimal" [minFractionDigits]="2" [maxFractionDigits]="2" [style]="{width: '100%'}" />
+      </div>
+    </div>
+    <div class="form-row">
+      <label>Notes</label>
+      <textarea pTextarea [(ngModel)]="newTrade.notes" rows="3" style="width:100%"></textarea>
+    </div>
+  </div>
+  <ng-template #footer>
+    <p-button label="Cancel" severity="secondary" [text]="true" (onClick)="addDialogVisible.set(false)" />
+    <p-button label="Add Trade" [loading]="saving()" [disabled]="!canSaveNewTrade" (onClick)="saveNewTrade()" />
+  </ng-template>
+</p-dialog>

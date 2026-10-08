@@ -77,6 +77,22 @@ public class TradesController(AppDbContext db) : ControllerBase
         return Ok(new PagedResult<TradeDto>(items, totalCount, page, pageSize, totalPages));
     }
 
+    [HttpGet("symbols")]
+    public async Task<ActionResult<List<string>>> GetSymbols([FromQuery] int[] accountIds)
+    {
+        var query = db.Trades.AsQueryable();
+        if (accountIds.Length > 0)
+            query = query.Where(t => accountIds.Contains(t.AccountId));
+
+        var symbols = await query
+            .Select(t => t.Symbol)
+            .Distinct()
+            .OrderBy(s => s)
+            .ToListAsync();
+
+        return Ok(symbols);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<TradeDto>> GetById(int id)
     {
@@ -91,6 +107,74 @@ public class TradesController(AppDbContext db) : ControllerBase
 
         var baseUrl = $"{Request.Scheme}://{Request.Host}";
         return Ok(MapToDto(t, baseUrl));
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<TradeDto>> Create([FromBody] CreateTradeDto dto)
+    {
+        if (!await db.Accounts.AnyAsync(a => a.Id == dto.AccountId))
+            return BadRequest("Account not found.");
+
+        if (!Enum.TryParse<TradeDirection>(dto.Direction, true, out var direction))
+            return BadRequest("Invalid direction.");
+
+        var commission = dto.Commission ?? 0;
+        var swap = dto.Swap ?? 0;
+        var entryTime = dto.EntryTime ?? dto.ExitTime ?? DateTime.UtcNow;
+
+        var trade = new Models.Trade
+        {
+            AccountId = dto.AccountId,
+            BrokerTradeId = $"MANUAL-{Guid.NewGuid():N}",
+            Symbol = dto.Symbol,
+            Direction = direction,
+            Status = TradeStatus.Closed,
+            EntryPrice = dto.EntryPrice ?? 0,
+            ExitPrice = dto.ExitPrice,
+            EntryTime = entryTime,
+            ExitTime = dto.ExitTime ?? entryTime,
+            StopLoss = dto.StopLoss,
+            TakeProfit = dto.TakeProfit,
+            Volume = dto.Volume,
+            GrossPnL = dto.NetPnL - commission - swap,
+            Commission = commission,
+            Swap = swap,
+            NetPnL = dto.NetPnL,
+            Notes = dto.Notes,
+            ImportedAt = DateTime.UtcNow,
+        };
+
+        db.Trades.Add(trade);
+        await db.SaveChangesAsync();
+
+        var result = await db.Trades
+            .Include(t => t.Account)
+            .Include(t => t.TradeTags)
+            .Include(t => t.TradeStrategies)
+            .Include(t => t.MergedTrades)
+            .FirstAsync(t => t.Id == trade.Id);
+
+        var baseUrl = $"{Request.Scheme}://{Request.Host}";
+        return CreatedAtAction(nameof(GetById), new { id = trade.Id }, MapToDto(result, baseUrl));
+    }
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var trade = await db.Trades
+            .Include(t => t.MergedTrades)
+            .FirstOrDefaultAsync(t => t.Id == id);
+        if (trade is null) return NotFound();
+
+        if (!trade.BrokerTradeId.StartsWith("MANUAL-"))
+            return BadRequest("Only manually added trades can be deleted.");
+
+        if (trade.MergedTrades.Count > 0)
+            return BadRequest("Undo the merge before deleting this trade.");
+
+        db.Trades.Remove(trade);
+        await db.SaveChangesAsync();
+        return NoContent();
     }
 
     [HttpGet("export/csv")]

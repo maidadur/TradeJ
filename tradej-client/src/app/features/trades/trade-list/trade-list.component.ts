@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { SelectModule } from 'primeng/select';
 import { ButtonModule } from 'primeng/button';
 import { TagModule } from 'primeng/tag';
@@ -13,8 +14,12 @@ import { PaginatorModule } from 'primeng/paginator';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { TooltipModule } from 'primeng/tooltip';
+import { DialogModule } from 'primeng/dialog';
+import { TextareaModule } from 'primeng/textarea';
+import { AutoCompleteModule } from 'primeng/autocomplete';
 import { MessageService, ConfirmationService } from 'primeng/api';
-import { Trade, TradeFilter } from '../../../core/models/trade.model';
+import { CreateTradeDto, Trade, TradeFilter } from '../../../core/models/trade.model';
+import { Account } from '../../../core/models/account.model';
 import { TradeService } from '../../../core/services/trade.service';
 import { AccountService } from '../../../core/services/account.service';
 import { StrategyService } from '../../../core/services/strategy.service';
@@ -24,9 +29,9 @@ import { TradeNavigationService } from '../../../core/services/trade-navigation.
   selector: 'app-trade-list',
   standalone: true,
   imports: [
-    CommonModule, FormsModule, TableModule, InputTextModule,
+    CommonModule, FormsModule, TableModule, InputTextModule, InputNumberModule,
     SelectModule, ButtonModule, TagModule, DatePickerModule, PaginatorModule, ToastModule,
-    ConfirmDialogModule, TooltipModule
+    ConfirmDialogModule, TooltipModule, DialogModule, TextareaModule, AutoCompleteModule
   ],
   providers: [MessageService, ConfirmationService],
   templateUrl: './trade-list.component.html',
@@ -61,6 +66,13 @@ export class TradeListComponent implements OnInit {
   directionOptions = ['Long', 'Short'];
   statusOptions = ['Open', 'Closed', 'Cancelled'];
 
+  accounts = signal<Account[]>([]);
+  addDialogVisible = signal(false);
+  saving = signal(false);
+  newTrade: Partial<CreateTradeDto> & { entryTimeDate?: Date | null; exitTimeDate?: Date | null } = {};
+  allSymbols: string[] = [];
+  symbolSuggestions: string[] = [];
+
   ngOnInit(): void {
     this.accountService.selectedAccountIds$.subscribe(ids => {
       this.accountIds.set(ids);
@@ -74,6 +86,7 @@ export class TradeListComponent implements OnInit {
         });
       }
     });
+    this.accountService.allAccounts$.subscribe(accounts => this.accounts.set(accounts));
   }
 
   loadTrades(): void {
@@ -214,6 +227,101 @@ export class TradeListComponent implements OnInit {
             this.merging.set(false);
             const detail = err.error?.message ?? err.error ?? 'Could not merge trades.';
             this.messageService.add({ severity: 'error', summary: 'Merge failed', detail, life: 5000 });
+          }
+        });
+      }
+    });
+  }
+
+  openAddDialog(): void {
+    const ids = this.accountIds();
+    this.newTrade = {
+      accountId: ids.length === 1 ? ids[0] : undefined,
+      direction: 'Long',
+      entryTimeDate: new Date(),
+      volume: undefined,
+      netPnL: undefined,
+      commission: 0,
+      swap: 0,
+    };
+    this.addDialogVisible.set(true);
+    this.tradeService.getSymbols(ids).subscribe(symbols => this.allSymbols = symbols);
+  }
+
+  filterSymbols(event: { query: string }): void {
+    const q = event.query.trim().toUpperCase();
+    this.symbolSuggestions = q
+      ? this.allSymbols.filter(s => s.toUpperCase().includes(q))
+      : this.allSymbols;
+  }
+
+  get addDialogVisibleProxy(): boolean {
+    return this.addDialogVisible();
+  }
+  set addDialogVisibleProxy(value: boolean) {
+    this.addDialogVisible.set(value);
+  }
+
+  get canSaveNewTrade(): boolean {
+    const t = this.newTrade;
+    return !!(t.accountId && t.symbol?.trim() && t.direction &&
+      t.volume != null && t.netPnL != null);
+  }
+
+  saveNewTrade(): void {
+    if (!this.canSaveNewTrade || this.saving()) return;
+    const t = this.newTrade;
+    const dto: CreateTradeDto = {
+      accountId: t.accountId!,
+      symbol: t.symbol!.trim().toUpperCase(),
+      direction: t.direction as 'Long' | 'Short',
+      volume: t.volume!,
+      netPnL: t.netPnL!,
+      entryTime: t.entryTimeDate ? t.entryTimeDate.toISOString() : null,
+      entryPrice: t.entryPrice ?? null,
+      exitTime: t.exitTimeDate ? t.exitTimeDate.toISOString() : null,
+      exitPrice: t.exitPrice ?? null,
+      stopLoss: t.stopLoss ?? null,
+      takeProfit: t.takeProfit ?? null,
+      commission: t.commission ?? 0,
+      swap: t.swap ?? 0,
+      notes: t.notes ?? null,
+    };
+    this.saving.set(true);
+    this.tradeService.createTrade(dto).subscribe({
+      next: () => {
+        this.saving.set(false);
+        this.addDialogVisible.set(false);
+        this.messageService.add({ severity: 'success', summary: 'Trade added', life: 3000 });
+        this.loadTrades();
+      },
+      error: (err) => {
+        this.saving.set(false);
+        const detail = err.error?.message ?? err.error ?? 'Could not add trade.';
+        this.messageService.add({ severity: 'error', summary: 'Add trade failed', detail, life: 5000 });
+      }
+    });
+  }
+
+  isManual(trade: Trade): boolean {
+    return trade.brokerTradeId?.startsWith('MANUAL-') ?? false;
+  }
+
+  deleteTrade(trade: Trade): void {
+    this.confirmService.confirm({
+      message: `Delete this manually added ${trade.symbol} trade? This cannot be undone.`,
+      header: 'Delete Trade',
+      icon: 'pi pi-trash',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.tradeService.deleteTrade(trade.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Trade deleted', life: 3000 });
+            this.loadTrades();
+          },
+          error: (err) => {
+            const detail = err.error?.message ?? err.error ?? 'Could not delete trade.';
+            this.messageService.add({ severity: 'error', summary: 'Delete failed', detail, life: 5000 });
           }
         });
       }

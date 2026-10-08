@@ -1,4 +1,5 @@
 <p-toast />
+<p-confirmdialog />
 <div class="trade-detail-page">
   <!-- Back nav + prev/next -->
   <div class="nav-row">
@@ -19,6 +20,18 @@
         />
         @if (trade()!.isRevoked) {
           <p-tag value="Revoked — excluded from statistics" severity="danger" />
+        }
+        @if (isManual()) {
+          <p-button
+            label="Delete trade"
+            icon="pi pi-trash"
+            severity="danger"
+            [outlined]="true"
+            size="small"
+            [loading]="deleting()"
+            (onClick)="deleteTrade()"
+            pTooltip="Permanently deletes this manually added trade"
+          />
         }
       }
     </div>

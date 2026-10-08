@@ -30,6 +30,23 @@ export interface Trade {
   mergedTradeIds: number[];
 }
 
+export interface CreateTradeDto {
+  accountId: number;
+  symbol: string;
+  direction: 'Long' | 'Short';
+  volume: number;
+  netPnL: number;
+  entryTime?: string | null;
+  entryPrice?: number | null;
+  exitTime?: string | null;
+  exitPrice?: number | null;
+  stopLoss?: number | null;
+  takeProfit?: number | null;
+  commission?: number | null;
+  swap?: number | null;
+  notes?: string | null;
+}
+
 export interface PagedResult<T> {
   items: T[];
   totalCount: number;

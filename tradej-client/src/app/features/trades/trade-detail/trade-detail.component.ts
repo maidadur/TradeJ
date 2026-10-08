@@ -8,7 +8,8 @@ import { EditorModule } from 'primeng/editor';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { Trade } from '../../../core/models/trade.model';
 import { TradeService } from '../../../core/services/trade.service';
@@ -23,9 +24,9 @@ import { TradeChartComponent } from './trade-chart/trade-chart.component';
   imports: [
     CommonModule, FormsModule, RouterLink,
     ButtonModule, TagModule, EditorModule, InputTextModule, InputNumberModule,
-    ToastModule, TagPickerComponent, StrategyPickerComponent, TradeChartComponent
+    ToastModule, ConfirmDialogModule, TagPickerComponent, StrategyPickerComponent, TradeChartComponent
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './trade-detail.component.html',
   styleUrl: './trade-detail.component.scss'
 })
@@ -35,6 +36,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   private tradeService = inject(TradeService);
   private tradeNavService = inject(TradeNavigationService);
   private messageService = inject(MessageService);
+  private confirmService = inject(ConfirmationService);
   private destroy$ = new Subject<void>();
   private notesChanged$ = new Subject<string>();
 
@@ -70,6 +72,9 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   savingMetrics = signal(false);
   savingRevoked = signal(false);
   unmerging = signal(false);
+  deleting = signal(false);
+
+  isManual = computed(() => this.trade()?.brokerTradeId?.startsWith('MANUAL-') ?? false);
 
   ngOnInit(): void {
     this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe(params => {
@@ -194,6 +199,31 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
 
   goToTrade(id: number): void {
     this.router.navigate(['/trades', id]);
+  }
+
+  deleteTrade(): void {
+    const t = this.trade();
+    if (!t || this.deleting()) return;
+    this.confirmService.confirm({
+      message: `Delete this manually added ${t.symbol} trade? This cannot be undone.`,
+      header: 'Delete Trade',
+      icon: 'pi pi-trash',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.deleting.set(true);
+        this.tradeService.deleteTrade(t.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Trade deleted', life: 3000 });
+            this.router.navigate(['/trades']);
+          },
+          error: (err) => {
+            this.deleting.set(false);
+            const detail = err.error?.message ?? err.error ?? 'Could not delete trade.';
+            this.messageService.add({ severity: 'error', summary: 'Delete failed', detail, life: 5000 });
+          }
+        });
+      }
+    });
   }
 
   formatPnL(value: number): string {

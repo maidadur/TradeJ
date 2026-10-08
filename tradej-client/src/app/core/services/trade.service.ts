@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { PagedResult, Trade, TradeFilter } from '../models/trade.model';
+import { CreateTradeDto, PagedResult, Trade, TradeFilter } from '../models/trade.model';
 
 @Injectable({ providedIn: 'root' })
 export class TradeService {
@@ -28,6 +28,22 @@ export class TradeService {
 
   getTrade(id: number) {
     return this.http.get<Trade>(`${this.apiUrl}/${id}`);
+  }
+
+  getSymbols(accountIds: number[]) {
+    let params = new HttpParams();
+    for (const id of accountIds) {
+      params = params.append('accountIds', id);
+    }
+    return this.http.get<string[]>(`${this.apiUrl}/symbols`, { params });
+  }
+
+  createTrade(dto: CreateTradeDto) {
+    return this.http.post<Trade>(this.apiUrl, dto);
+  }
+
+  deleteTrade(id: number) {
+    return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
   updateNotes(id: number, notes: string | null) {

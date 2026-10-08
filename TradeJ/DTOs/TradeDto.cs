@@ -31,6 +31,22 @@ public record TradeDto(
     int? MergedIntoTradeId,
     List<int> MergedTradeIds);
 
+public record CreateTradeDto(
+    int AccountId,
+    string Symbol,
+    string Direction,
+    decimal Volume,
+    decimal NetPnL,
+    DateTime? EntryTime,
+    decimal? EntryPrice,
+    DateTime? ExitTime,
+    decimal? ExitPrice,
+    decimal? StopLoss,
+    decimal? TakeProfit,
+    decimal? Commission,
+    decimal? Swap,
+    string? Notes);
+
 public record UpdateTradeMetricsDto(
     decimal? RR,
     decimal? ActualRR,
