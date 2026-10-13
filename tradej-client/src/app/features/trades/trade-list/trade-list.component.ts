@@ -89,6 +89,12 @@ export class TradeListComponent implements OnInit {
     this.accountService.allAccounts$.subscribe(accounts => this.accounts.set(accounts));
   }
 
+  private toLocalDate(d: Date | null): string | undefined {
+    if (!d) return undefined;
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  }
+
   loadTrades(): void {
     const ids = this.accountIds();
     if (!ids.length) return;
@@ -101,8 +107,8 @@ export class TradeListComponent implements OnInit {
       symbol: this.filter.symbol,
       direction: this.filter.direction,
       status: this.filter.status,
-      dateFrom: this.dateFrom?.toISOString().split('T')[0],
-      dateTo: this.dateTo?.toISOString().split('T')[0],
+      dateFrom: this.toLocalDate(this.dateFrom),
+      dateTo: this.toLocalDate(this.dateTo),
       sortBy: this.filter.sortBy ?? 'entryTime',
       sortDesc: this.filter.sortDesc ?? true,
     };
@@ -344,8 +350,8 @@ export class TradeListComponent implements OnInit {
       symbol: this.filter.symbol,
       direction: this.filter.direction,
       status: this.filter.status,
-      dateFrom: this.dateFrom?.toISOString().split('T')[0],
-      dateTo: this.dateTo?.toISOString().split('T')[0],
+      dateFrom: this.toLocalDate(this.dateFrom),
+      dateTo: this.toLocalDate(this.dateTo),
       sortBy: this.filter.sortBy ?? 'entryTime',
       sortDesc: this.filter.sortDesc ?? true,
     };

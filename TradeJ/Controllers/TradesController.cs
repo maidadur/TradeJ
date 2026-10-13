@@ -50,7 +50,10 @@ public class TradesController(AppDbContext db) : ControllerBase
             query = query.Where(t => t.EntryTime >= dateFrom.Value);
 
         if (dateTo.HasValue)
-            query = query.Where(t => t.EntryTime <= dateTo.Value);
+        {
+            var toExclusive = dateTo.Value.Date.AddDays(1);
+            query = query.Where(t => t.EntryTime < toExclusive);
+        }
 
         query = (sortBy?.ToLower(), sortDesc) switch
         {
@@ -248,7 +251,10 @@ public class TradesController(AppDbContext db) : ControllerBase
             query = query.Where(t => t.EntryTime >= dateFrom.Value);
 
         if (dateTo.HasValue)
-            query = query.Where(t => t.EntryTime <= dateTo.Value);
+        {
+            var toExclusive = dateTo.Value.Date.AddDays(1);
+            query = query.Where(t => t.EntryTime < toExclusive);
+        }
 
         query = (sortBy?.ToLower(), sortDesc) switch
         {
