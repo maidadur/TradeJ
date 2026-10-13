@@ -75,6 +75,14 @@ export class TradeService {
   }
 
   exportCsv(filter: Partial<TradeFilter> & { accountIds: number[] }) {
+    return this.http.get(`${this.apiUrl}/export/csv`, { params: this.exportParams(filter), responseType: 'blob', observe: 'response' });
+  }
+
+  exportPdf(filter: Partial<TradeFilter> & { accountIds: number[] }) {
+    return this.http.get(`${this.apiUrl}/export/pdf`, { params: this.exportParams(filter), responseType: 'blob', observe: 'response' });
+  }
+
+  private exportParams(filter: Partial<TradeFilter> & { accountIds: number[] }): HttpParams {
     let params = new HttpParams();
     for (const id of filter.accountIds) {
       params = params.append('accountIds', id);
@@ -87,6 +95,6 @@ export class TradeService {
     if (filter.sortBy) params = params.set('sortBy', filter.sortBy);
     if (filter.sortDesc !== undefined) params = params.set('sortDesc', filter.sortDesc);
 
-    return this.http.get(`${this.apiUrl}/export/csv`, { params, responseType: 'blob', observe: 'response' });
+    return params;
   }
 }

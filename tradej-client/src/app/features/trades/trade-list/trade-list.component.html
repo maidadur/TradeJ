@@ -40,6 +40,14 @@
           size="small"
           (onClick)="exportCsv()"
         />
+        <p-button
+          icon="pi pi-file-pdf"
+          label="Export PDF (AI)"
+          severity="secondary"
+          size="small"
+          pTooltip="PDF with notes and screenshots, to upload to ChatGPT / Claude (max 50 trades)"
+          (onClick)="exportPdf()"
+        />
       </div>
     }
   </div>

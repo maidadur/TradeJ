@@ -188,6 +188,42 @@ public class TradesController(AppDbContext db) : ControllerBase
         [FromQuery] string? sortBy = "entryTime",
         [FromQuery] bool sortDesc = true)
     {
+        var query = BuildExportQuery(accountIds, symbol, direction, status, dateFrom, dateTo, sortBy, sortDesc);
+        var trades = await query.ToListAsync();
+        return CsvResult(trades);
+    }
+
+    [HttpGet("export/pdf")]
+    public async Task<IActionResult> ExportPdf(
+        [FromQuery] int[] accountIds,
+        [FromQuery] string? symbol = null,
+        [FromQuery] string? direction = null,
+        [FromQuery] string? status = null,
+        [FromQuery] DateTime? dateFrom = null,
+        [FromQuery] DateTime? dateTo = null,
+        [FromQuery] string? sortBy = "entryTime",
+        [FromQuery] bool sortDesc = true)
+    {
+        var query = BuildExportQuery(accountIds, symbol, direction, status, dateFrom, dateTo, sortBy, sortDesc);
+        var total = await query.CountAsync();
+        var trades = await query.Take(Services.TradePdfExporter.MaxTrades).ToListAsync();
+
+        var parts = new List<string>();
+        if (!string.IsNullOrWhiteSpace(symbol)) parts.Add($"symbol~{symbol}");
+        if (!string.IsNullOrWhiteSpace(direction)) parts.Add($"direction={direction}");
+        if (!string.IsNullOrWhiteSpace(status)) parts.Add($"status={status}");
+        if (dateFrom.HasValue) parts.Add($"from {dateFrom:yyyy-MM-dd}");
+        if (dateTo.HasValue) parts.Add($"to {dateTo:yyyy-MM-dd}");
+        var summary = "Filters: " + (parts.Count > 0 ? string.Join(", ", parts) : "none");
+
+        var bytes = Services.TradePdfExporter.Build(trades, total, summary);
+        return File(bytes, "application/pdf", $"trades_{DateTime.UtcNow:yyyyMMdd_HHmmss}.pdf");
+    }
+
+    private IQueryable<Trade> BuildExportQuery(
+        int[] accountIds, string? symbol, string? direction, string? status,
+        DateTime? dateFrom, DateTime? dateTo, string? sortBy, bool sortDesc)
+    {
         var query = db.Trades
             .Include(t => t.Account)
             .Include(t => t.TradeTags).ThenInclude(tt => tt.Tag)
@@ -225,8 +261,11 @@ public class TradesController(AppDbContext db) : ControllerBase
             _                    => query.OrderByDescending(t => t.EntryTime)
         };
 
-        var trades = await query.ToListAsync();
+        return query;
+    }
 
+    private IActionResult CsvResult(List<Trade> trades)
+    {
         var sb = new StringBuilder();
         sb.AppendLine("Id,AccountId,AccountName,BrokerTradeId,Symbol,Direction,Status," +
                       "EntryTime,ExitTime,EntryPrice,ExitPrice,Volume," +

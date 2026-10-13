@@ -329,6 +329,14 @@ export class TradeListComponent implements OnInit {
   }
 
   exportCsv(): void {
+    this.export('csv');
+  }
+
+  exportPdf(): void {
+    this.export('pdf');
+  }
+
+  private export(kind: 'csv' | 'pdf'): void {
     const ids = this.accountIds();
     if (!ids.length) return;
     const f = {
@@ -341,19 +349,21 @@ export class TradeListComponent implements OnInit {
       sortBy: this.filter.sortBy ?? 'entryTime',
       sortDesc: this.filter.sortDesc ?? true,
     };
-    this.tradeService.exportCsv(f).subscribe({
+    const request = kind === 'pdf' ? this.tradeService.exportPdf(f) : this.tradeService.exportCsv(f);
+    request.subscribe({
       next: response => {
         const blob = response.body!;
         const disposition = response.headers.get('Content-Disposition') ?? '';
         const match = disposition.match(/filename="?([^";\n]+)"?/);
-        const filename = match ? match[1] : 'trades.csv';
+        const filename = match ? match[1] : `trades.${kind}`;
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = filename;
         a.click();
         URL.revokeObjectURL(url);
-      }
+      },
+      error: () => this.messageService.add({ severity: 'error', summary: 'Export failed', detail: 'Could not export trades.', life: 5000 })
     });
   }
 }
