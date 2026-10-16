@@ -63,6 +63,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   });
 
   notesHtml = '';
+  linkedImages = signal<string[]>([]);
   lightboxSrc = signal<string | null>(null);
 
   // Metrics editing state
@@ -102,6 +103,7 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
       next: trade => {
         this.trade.set(trade);
         this.notesHtml = trade.notes ?? '';
+        this.linkedImages.set(this.extractImageLinks(this.notesHtml));
         this.metricsRR = trade.rr ?? null;
         this.metricsActualRR = trade.actualRR ?? null;
         this.metricsRiskPercent = trade.riskPercent ?? null;
@@ -112,7 +114,35 @@ export class TradeDetailComponent implements OnInit, OnDestroy {
   }
 
   onNotesChange(html: string): void {
+    this.linkedImages.set(this.extractImageLinks(html));
     this.notesChanged$.next(html);
+  }
+
+  // Hyperlinks (or bare URLs) in notes that point to an image get previewed under the editor.
+  private extractImageLinks(html: string): string[] {
+    const imgUrl = /^https?:\/\/[^\s"'<>]+?\.(?:png|jpe?g|gif|webp|bmp|svg|avif)(?:[?#][^\s"'<>]*)?$/i;
+    // TradingView snapshot pages (tradingview.com/x/<id>) map to s3.tradingview.com/snapshots/<first char lowercased>/<id>.png
+    const tvSnapshot = /^https?:\/\/(?:www\.)?tradingview\.com\/x\/([A-Za-z0-9]+)\/?(?:[?#].*)?$/i;
+    const toImage = (url: string): string | null => {
+      const tv = tvSnapshot.exec(url);
+      if (tv) return `https://s3.tradingview.com/snapshots/${tv[1][0].toLowerCase()}/${tv[1]}.png`;
+      return imgUrl.test(url) ? url : null;
+    };
+    const doc = new DOMParser().parseFromString(html ?? '', 'text/html');
+    const urls = new Set<string>();
+    doc.querySelectorAll('a[href]').forEach(a => {
+      const img = toImage((a.getAttribute('href') ?? '').trim());
+      if (img) urls.add(img);
+    });
+    (doc.body.textContent ?? '').split(/\s+/).forEach(w => {
+      const img = toImage(w);
+      if (img) urls.add(img);
+    });
+    return [...urls];
+  }
+
+  openLightbox(src: string): void {
+    this.lightboxSrc.set(src);
   }
 
   onNotesClick(event: MouseEvent): void {

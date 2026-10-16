@@ -251,6 +251,13 @@
               [style]="{'min-height':'220px'}"
             />
           </div>
+          @if (linkedImages().length) {
+            <div class="linked-images">
+              @for (src of linkedImages(); track src) {
+                <img class="linked-image" [src]="src" alt="Linked image" loading="lazy" (click)="openLightbox(src)" />
+              }
+            </div>
+          }
         </div>
       </div>
     </div>
